@@ -44,7 +44,7 @@ except subprocess.TimeoutExpired:
 detections = []
 for line in proc.stdout.splitlines():
     if line.rstrip().endswith(" FOUND"):
-        name, separator, signature = line.partition(": ")
+        name, separator, signature = line.rpartition(": ")
         if separator:
             detections.append((name, signature.removesuffix(" FOUND")))
 
