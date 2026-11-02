@@ -81,6 +81,9 @@ class AIManager(Gtk.Application):
         self.stop_button = Gtk.Button(label="Stop local AI")
         self.stop_button.connect("clicked", self.stop_server)
         modelrow.append(self.stop_button)
+        open_chat = Gtk.Button(label="Open local chat")
+        open_chat.connect("clicked", self.open_chat)
+        modelrow.append(open_chat)
 
         self.status = Gtk.Label(label="Ready. Public Hugging Face repositories can be downloaded without signing in.")
         self.status.set_wrap(True); self.status.set_xalign(0)
@@ -202,6 +205,12 @@ class AIManager(Gtk.Application):
             self.server_log_handle = None
         self.server_proc = None
         return GLib.SOURCE_REMOVE
+
+    def open_chat(self, *_):
+        try:
+            subprocess.Popen(["xdg-open", "http://127.0.0.1:" + str(SERVER_PORT)])
+        except OSError as exc:
+            self.status.set_text("Could not open browser: " + str(exc) + ". Visit http://127.0.0.1:8080 manually.")
 
     def stop_server(self, *_):
         if self.server_proc and self.server_proc.poll() is None:
