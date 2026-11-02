@@ -98,3 +98,19 @@ python-pip
 # Local AI model manager (Hugging Face downloads + CPU-capable llama.cpp)
 python-huggingface-hub
 llama-cpp
+
+# Audio stack and mixer
+pipewire
+pipewire-alsa
+pipewire-pulse
+wireplumber
+pavucontrol
+playerctl
+
+# Display, webcam, and local video controls
+xfce4-settings
+brightnessctl
+v4l-utils
+guvcview
+mpv
+ffmpeg
