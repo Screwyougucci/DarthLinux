@@ -1,4 +1,4 @@
-# XFCE desktop and live-session essentials
+# Lightweight XFCE desktop and live-session essentials
 base
 linux
 linux-firmware
@@ -27,10 +27,35 @@ openssh
 cryptsetup
 gnupg
 openssl
+# Network discovery and packet analysis
 nmap
 tcpdump
 traceroute
 wireshark-cli
+# Web application testing (authorized targets only)
+nikto
+sqlmap
+ffuf
+gobuster
+# Wireless auditing (owned lab equipment only)
+aircrack-ng
+hcxtools
+# Password auditing and recovery
+john
+# Reverse engineering and debugging
+radare2
+gdb
+strace
+binwalk
+# Digital forensics and file analysis
 testdisk
+sleuthkit
+foremost
+yara
+# Defensive inspection and developer utilities
 clamav
 lynis
+jq
+ripgrep
+python
+python-pip
