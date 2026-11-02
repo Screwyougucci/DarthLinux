@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Darth Dock
+Comment=Desktop application dock
+Exec=plank
+OnlyShowIn=XFCE;
+X-GNOME-Autostart-enabled=true
