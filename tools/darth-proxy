@@ -265,6 +265,11 @@ class ProxyApp(Gtk.Application):
         profile_dir.mkdir(parents=True, exist_ok=True)
         os.chmod(profile_dir, 0o700)
         if cfg["type"] == "socks5":
+            if username:
+                raise ValueError(
+                    "Firefox SOCKS5 username/password authentication is not supported reliably. "
+                    "Use provider IP allowlisting or an HTTP proxy endpoint instead."
+                )
             prefs = [
                 'user_pref("network.proxy.type", 1);',
                 'user_pref("network.proxy.socks", ' + json.dumps(cfg["host"]) + ');',
@@ -272,8 +277,6 @@ class ProxyApp(Gtk.Application):
                 'user_pref("network.proxy.socks_version", 5);',
                 'user_pref("network.proxy.socks_remote_dns", true);'
             ]
-            if username:
-                self.status.set_text("Firefox SOCKS5 authentication is not reliably supported. Use provider IP allowlisting or an HTTP endpoint if available.")
         else:
             prefs = [
                 'user_pref("network.proxy.type", 1);',
