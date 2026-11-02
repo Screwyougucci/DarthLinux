@@ -1,27 +1,54 @@
 #!/usr/bin/env python3
 """Darth Recovery: user-selected backup and cautious restore."""
-import argparse,tarfile,sys
+import argparse
+import sys
+import tarfile
 from pathlib import Path
-p=argparse.ArgumentParser(description="Create or restore a tar backup. Restore extracts only into a new empty directory.")
-sub=p.add_subparsers(dest="cmd",required=True)
-b=sub.add_parser("backup");b.add_argument("source");b.add_argument("archive")
-r=sub.add_parser("restore");r.add_argument("archive");r.add_argument("destination")
-a=p.parse_args()
-if a.cmd=="backup":
- src=Path(a.source).expanduser().resolve();out=Path(a.archive).expanduser()
- if not src.exists():sys.exit("Source does not exist.")
- with tarfile.open(out,"w:gz") as t:t.add(src,arcname=src.name,recursive=True)
- print(f"Backup created: {out}")
+
+parser = argparse.ArgumentParser(
+    description="Create or restore a tar backup. Restore extracts only into a new empty directory."
+)
+sub = parser.add_subparsers(dest="cmd", required=True)
+backup = sub.add_parser("backup")
+backup.add_argument("source")
+backup.add_argument("archive")
+restore = sub.add_parser("restore")
+restore.add_argument("archive")
+restore.add_argument("destination")
+args = parser.parse_args()
+
+if args.cmd == "backup":
+    source = Path(args.source).expanduser().resolve()
+    archive = Path(args.archive).expanduser().resolve()
+    if not source.exists():
+        sys.exit("Source does not exist.")
+    if archive == source or (source.is_dir() and source in archive.parents):
+        sys.exit("Archive must be outside the source; refusing to overwrite or back up itself.")
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with tarfile.open(archive, "w:gz") as stream:
+            stream.add(source, arcname=source.name, recursive=True)
+    except (OSError, tarfile.TarError) as exc:
+        sys.exit(f"Backup failed: {exc}")
+    print(f"Backup created: {archive}")
 else:
- arc=Path(a.archive).expanduser().resolve();dest=Path(a.destination).expanduser().resolve()
- if not arc.is_file():sys.exit("Archive not found.")
- if dest.exists() and any(dest.iterdir()):sys.exit("Restore destination must be new or empty.")
- if input(f"Type RESTORE to extract {arc} into {dest}: ").strip()!="RESTORE":sys.exit("Cancelled.")
- dest.mkdir(parents=True,exist_ok=True)
- with tarfile.open(arc,"r:gz") as t:
-  root=dest.resolve()
-  for member in t.getmembers():
-   target=(dest/member.name).resolve()
-   if target!=root and root not in target.parents:sys.exit("Unsafe archive path rejected.")
-  t.extractall(dest,filter="data")
- print(f"Restore extracted to: {dest}")
+    archive = Path(args.archive).expanduser().resolve()
+    destination = Path(args.destination).expanduser().resolve()
+    if not archive.is_file():
+        sys.exit("Archive not found.")
+    if destination.exists() and (not destination.is_dir() or any(destination.iterdir())):
+        sys.exit("Restore destination must be a new or empty directory.")
+    if input(f"Type RESTORE to extract {archive} into {destination}: ").strip() != "RESTORE":
+        sys.exit("Cancelled.")
+    destination.mkdir(parents=True, exist_ok=True)
+    try:
+        with tarfile.open(archive, "r:gz") as stream:
+            root = destination.resolve()
+            for member in stream.getmembers():
+                target = (destination / member.name).resolve()
+                if target != root and root not in target.parents:
+                    sys.exit("Unsafe archive path rejected.")
+            stream.extractall(destination, filter="data")
+    except (OSError, tarfile.TarError) as exc:
+        sys.exit(f"Restore failed: {exc}")
+    print(f"Restore extracted to: {destination}")
