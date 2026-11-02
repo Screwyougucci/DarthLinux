@@ -3,8 +3,25 @@ base
 linux
 linux-firmware
 archinstall
-xfce4
-xfce4-goodies
+# Explicit XFCE components avoid interactive package-group selection
+exo
+garcon
+thunar-volman
+tumbler
+xfce4-appfinder
+xfce4-panel
+xfce4-power-manager
+xfce4-session
+xfce4-settings
+xfce4-terminal
+xfconf
+xfdesktop
+xfwm4
+xfce4-battery-plugin
+xfce4-clipman-plugin
+xfce4-places-plugin
+xfce4-screenshooter
+xfce4-screensaver
 xfce4-taskmanager
 xfce4-sensors-plugin
 xfce4-systemload-plugin
@@ -43,12 +60,10 @@ bind
 whois
 iperf3
 mtr
-netcat-openbsd
+openbsd-netcat
 # Web application testing (authorized targets only)
 nikto
-sqlmap
-ffuf
-gobuster
+sqlmapgobuster
 # Wireless auditing (owned lab equipment only)
 aircrack-ng
 hcxtools
