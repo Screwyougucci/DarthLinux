@@ -6,7 +6,8 @@ p=argparse.ArgumentParser(description="Scan files with ClamAV; detections are ne
 p.add_argument("target");p.add_argument("--quarantine",action="store_true",help="Move confirmed detections to a private quarantine after asking.")
 a=p.parse_args();target=Path(a.target).expanduser().resolve()
 if not target.exists():sys.exit("Target does not exist.")
-shutil_which=__import__("shutil").which("clamscan")\nif not shutil_which:sys.exit("ClamAV is not installed.")
+shutil_which=__import__("shutil").which("clamscan")
+if not shutil_which:sys.exit("ClamAV is not installed.")
 proc=subprocess.run([shutil_which,"--infected","--recursive","--no-summary",str(target)],text=True,capture_output=True)
 detections=[]
 for line in proc.stdout.splitlines():
