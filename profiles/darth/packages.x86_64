@@ -5,6 +5,11 @@ linux-firmware
 archinstall
 xfce4
 xfce4-goodies
+xfce4-taskmanager
+xfce4-sensors-plugin
+xfce4-systemload-plugin
+xfce4-cpugraph-plugin
+xfce4-diskperf-plugin
 lightdm
 lightdm-gtk-greeter
 networkmanager
@@ -19,6 +24,8 @@ git
 curl
 wget
 htop
+btop
+bottom
 fastfetch
 man-db
 man-pages
@@ -54,6 +61,8 @@ foremost
 yara
 # Defensive inspection and developer utilities
 clamav
+clamui
+rkhunter
 lynis
 jq
 ripgrep
