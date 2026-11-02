@@ -1,0 +1,55 @@
+name: Build Darth Linux ISO
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "build.sh"
+      - "profiles/**"
+      - "tools/**"
+      - "packaging/**"
+      - ".github/workflows/build-iso.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: darth-linux-iso-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Show available disk
+        run: df -h
+
+      - name: Build in a privileged Arch Linux container
+        run: |
+          docker pull archlinux:latest
+          docker run --privileged --rm \
+            -v "${{ github.workspace }}:/src" \
+            -w /src \
+            archlinux:latest \
+            bash -euo pipefail -c '
+              pacman -Syu --noconfirm archiso git
+              bash ./build.sh
+              test -n "$(find out -maxdepth 1 -type f -name "*.iso" -print -quit)"
+              sha256sum out/*.iso > out/SHA256SUMS
+            '
+
+      - name: Upload ISO and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: darth-linux-live-iso
+          path: |
+            out/*.iso
+            out/SHA256SUMS
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
