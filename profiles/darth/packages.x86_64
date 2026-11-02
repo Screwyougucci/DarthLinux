@@ -34,11 +34,16 @@ openssh
 cryptsetup
 gnupg
 openssl
-# Network discovery and packet analysis
+# Network discovery, diagnostics, and packet analysis
 nmap
 tcpdump
 traceroute
 wireshark-cli
+bind
+whois
+iperf3
+mtr
+netcat-openbsd
 # Web application testing (authorized targets only)
 nikto
 sqlmap
@@ -59,6 +64,16 @@ testdisk
 sleuthkit
 foremost
 yara
+# Virtual machine host tools (optional to use; require CPU virtualization support)
+qemu-desktop
+virt-manager
+libvirt
+dnsmasq
+edk2-ovmf
+
+# Lightweight graphical text editor
+mousepad
+
 # Defensive inspection and developer utilities
 clamav
 clamui
