@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Bluetooth Manager
+Exec=blueman-applet
+OnlyShowIn=XFCE;
+X-GNOME-Autostart-enabled=true
