@@ -3,7 +3,7 @@
 import subprocess
 import gi
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, Gio, GLib
+from gi.repository import Gtk, Gio, Gdk
 
 def run(args):
     try:
@@ -18,7 +18,29 @@ class ControlCenter(Gtk.Application):
                          flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
 
     def do_activate(self):
+        css = Gtk.CssProvider()
+        css.load_from_data(b"""
+            window.darth-window { background: #101116; color: #eeeeF4; }
+            .darth-window label { color: #eeeeF4; }
+            .darth-window .title-1 { color: #f04452; font-weight: 800; }
+            .darth-window button {
+                background: #20232c; color: #f4f4f6;
+                border: 1px solid #7e2631; border-radius: 10px;
+                padding: 12px;
+            }
+            .darth-window button:hover { background: #38212a; border-color: #ff4655; }
+            .darth-window .card {
+                background: #191c24; border: 1px solid #44404a;
+                border-radius: 10px; padding: 16px;
+            }
+            .darth-window .dim-label { color: #a9a9b4; }
+        """)
+        display = Gdk.Display.get_default()
+        if display:
+            Gtk.StyleContext.add_provider_for_display(
+                display, css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         win = Gtk.ApplicationWindow(application=self)
+        win.add_css_class("darth-window")
         win.set_title("Darth Linux // Control Center")
         win.set_default_size(760, 600)
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
