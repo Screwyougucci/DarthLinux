@@ -40,7 +40,7 @@ class ProxyApp(Gtk.Application):
 
         form = Gtk.Grid(column_spacing=10, row_spacing=10)
         root.append(form)
-        self.kind = Gtk.DropDown.new_from_strings(["HTTP / HTTPS", "SOCKS5"])
+        self.kind = Gtk.DropDown.new_from_strings(["HTTP proxy (CONNECT)", "SOCKS5"])
         self.host = Gtk.Entry(placeholder_text="proxy.example.net")
         self.port = Gtk.Entry(placeholder_text="8080")
         self.username = Gtk.Entry(placeholder_text="Optional username")
