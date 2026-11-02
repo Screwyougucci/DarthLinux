@@ -1,16 +1,52 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-usage(){ echo "Darth Guardian — nftables firewall status"; echo "Usage: darth-guardian [status|enable|disable|rules]"; }
+
+usage() {
+  cat <<'EOF'
+Darth Guardian — manage Darth Linux's own nftables firewall table
+Usage: darth-guardian [status|enable|disable|rules]
+
+disable removes only inet darth_filter for the current boot.
+The nftables service remains enabled; restarting it or rebooting reloads
+the configured Darth firewall. Other applications' firewall tables remain.
+EOF
+}
+
 action="${1:-status}"
 case "$action" in
- status) systemctl is-active nftables || true; nft list ruleset 2>/dev/null || echo "No readable nftables ruleset.";;
- rules) nft list ruleset;;
- enable|disable)
-  [[ $EUID -eq 0 ]] || { echo "Run with sudo." >&2; exit 1; }
-  echo "This changes the system firewall service."
-  read -r -p "Type ENABLE FIREWALL or DISABLE FIREWALL: " confirm
-  [[ "$confirm" == "ENABLE FIREWALL" && "$action" == enable ]] && systemctl enable --now nftables
-  [[ "$confirm" == "DISABLE FIREWALL" && "$action" == disable ]] && systemctl disable --now nftables
-  ;;
- *) usage; exit 2;;
+  status)
+    if nft list table inet darth_filter >/dev/null 2>&1; then
+      echo "Darth firewall: active"
+    else
+      echo "Darth firewall: not loaded"
+    fi
+    systemctl is-active nftables || true
+    ;;
+  rules)
+    nft list table inet darth_filter
+    ;;
+  enable)
+    [[ $EUID -eq 0 ]] || { echo "Run with sudo." >&2; exit 1; }
+    echo "This loads Darth Linux's firewall table and enables nftables at boot."
+    read -r -p "Type ENABLE FIREWALL: " confirm
+    [[ "$confirm" == "ENABLE FIREWALL" ]] || { echo "Cancelled."; exit 1; }
+    systemctl enable nftables
+    if systemctl is-active --quiet nftables; then
+      nft -f /etc/nftables.conf
+    else
+      systemctl start nftables
+    fi
+    ;;
+  disable)
+    [[ $EUID -eq 0 ]] || { echo "Run with sudo." >&2; exit 1; }
+    echo "This removes only Darth's firewall table for this boot."
+    read -r -p "Type DISABLE FIREWALL: " confirm
+    [[ "$confirm" == "DISABLE FIREWALL" ]] || { echo "Cancelled."; exit 1; }
+    nft destroy table inet darth_filter
+    echo "Darth firewall table removed. Other firewall tables and nftables.service were left untouched."
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
 esac
