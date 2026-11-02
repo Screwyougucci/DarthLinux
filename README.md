@@ -11,7 +11,8 @@
 - Make full-disk encryption available during installation.
 - Ship sensible network-security defaults and useful defensive tools.
 - Keep the base system lean, transparent, and free of project-added telemetry.
-- Include a broad toolkit for authorized network, web, wireless, forensics, and reverse-engineering lab work.\n- Include original Darth utilities with conservative, scope-limited defaults.
+- Include a broad toolkit for authorized network, web, wireless, forensics, and reverse-engineering lab work.
+- Include original Darth utilities with conservative, scope-limited defaults.
 - Provide lightweight system dashboards and on-demand antivirus tools.
 - Include a QEMU/KVM virtual machine manager, network diagnostics toolkit, and Mousepad notepad.
 
@@ -41,7 +42,10 @@ The live image includes `archinstall`. Run it from the live session and select e
 ## Optional toolkit
 Run `sudo bash scripts/install-security-tools.sh` after installation to add the optional defensive / authorized lab tools. Review the script before running it.
 
-## Security toolkit\nThe live profile includes a starter set of network, web, wireless-audit, forensics, and reverse-engineering packages. See [docs/SECURITY-TOOLKIT.md](docs/SECURITY-TOOLKIT.md) for the custom utilities and responsible-use boundaries. The package list is experimental until an Archiso build validates every package name.\n\n## Darth Control Center and VPN
+## Security toolkit
+The live profile includes a starter set of network, web, wireless-audit, forensics, and reverse-engineering packages. See [docs/SECURITY-TOOLKIT.md](docs/SECURITY-TOOLKIT.md) for the custom utilities and responsible-use boundaries. The package list is experimental until an Archiso build validates every package name.
+
+## Darth Control Center and VPN
 
 The original GTK4 **Darth Control Center** brings together VM management, VPN settings/status, network diagnostics, antivirus, system monitoring, and Mousepad. VPN support includes native NetworkManager WireGuard and OpenVPN via its NetworkManager plugin; no VPN subscription or provider is bundled. See [docs/CONTROL-CENTER-VPN.md](docs/CONTROL-CENTER-VPN.md).
 
@@ -63,7 +67,11 @@ No boot test, hardware compatibility test, installer test, or encryption verific
 
 ## License
 Unless otherwise noted, project source and original artwork are offered under the MIT License. Third-party components retain their own licenses.
-\n## Residential proxy setup\n\nThe Control Center includes **Darth Proxy**, a utility for saving multiple provider-supplied HTTP or SOCKS5 residential proxy profiles, switching between them, testing connectivity, and starting a fresh provider session when the provider documents a session-ID username format. It launches dedicated Firefox profiles and does not route all system traffic. Read [docs/DARTH-PROXY.md](docs/DARTH-PROXY.md) for setup, privacy notes, and limitations.\n
+
+## Residential proxy setup
+
+The Control Center includes **Darth Proxy**, a utility for saving multiple provider-supplied HTTP or SOCKS5 residential proxy profiles, switching between them, testing connectivity, and starting a fresh provider session when the provider documents a session-ID username format. It launches dedicated Firefox profiles and does not route all system traffic. Read [docs/DARTH-PROXY.md](docs/DARTH-PROXY.md) for setup, privacy notes, and limitations.
+
 ## Local AI Model Manager
 
 Darth Linux includes **Darth AI Model Manager**, a GTK desktop utility for downloading GGUF models from Hugging Face and running them locally with llama.cpp. It supports CPU inference, local model storage, a loopback-only chat UI, and stop/start controls. See [docs/DARTH-AI-MANAGER.md](docs/DARTH-AI-MANAGER.md) for model selection, hardware guidance, and security notes.
