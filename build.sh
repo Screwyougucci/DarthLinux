@@ -28,7 +28,7 @@ for tool in darth-audit darth-scope-scan darth-center darth-av-scan \
   [[ -f "$ROOT_DIR/tools/$tool" ]] || die "Missing custom tool: $tool"
   install -Dm755 "$ROOT_DIR/tools/$tool" "$BIN_DIR/$tool"
 done
-for desktop in darth-control-center.desktop darth-ai-manager.desktop darth-settings.desktop; do
+for desktop in darth-control-center.desktop darth-ai-manager.desktop darth-settings.desktop \\\n               darth-watchtower.desktop darth-driver-manager.desktop darth-store.desktop; do
   [[ -f "$ROOT_DIR/packaging/$desktop" ]] || die "Missing desktop entry: $desktop"
   install -Dm644 "$ROOT_DIR/packaging/$desktop" "$APP_DIR/$desktop"
 done
