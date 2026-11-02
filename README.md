@@ -13,6 +13,7 @@
 - Keep the base system lean, transparent, and free of project-added telemetry.
 - Include a broad toolkit for authorized network, web, wireless, forensics, and reverse-engineering lab work.\n- Include original Darth utilities with conservative, scope-limited defaults.
 - Provide lightweight system dashboards and on-demand antivirus tools.
+- Include a QEMU/KVM virtual machine manager, network diagnostics toolkit, and Mousepad notepad.
 
 ## Visual identity
 Near-black graphite, crimson accents, and restrained tactical details. Artwork is original project branding, not affiliated with Lucasfilm, Disney, or Arch Linux.
@@ -40,7 +41,11 @@ The live image includes `archinstall`. Run it from the live session and select e
 ## Optional toolkit
 Run `sudo bash scripts/install-security-tools.sh` after installation to add the optional defensive / authorized lab tools. Review the script before running it.
 
-## Security toolkit\nThe live profile includes a starter set of network, web, wireless-audit, forensics, and reverse-engineering packages. See [docs/SECURITY-TOOLKIT.md](docs/SECURITY-TOOLKIT.md) for the custom utilities and responsible-use boundaries. The package list is experimental until an Archiso build validates every package name.\n\n## Dashboards and antivirus
+## Security toolkit\nThe live profile includes a starter set of network, web, wireless-audit, forensics, and reverse-engineering packages. See [docs/SECURITY-TOOLKIT.md](docs/SECURITY-TOOLKIT.md) for the custom utilities and responsible-use boundaries. The package list is experimental until an Archiso build validates every package name.\n\n## Virtual machines, network tools, and notepad
+
+The desktop image includes QEMU/KVM with Virtual Machine Manager, network troubleshooting tools, and Mousepad. VM use requires hardware virtualization support and sufficient memory; see [docs/VM-NETWORK-NOTES.md](docs/VM-NETWORK-NOTES.md) for setup and safe network-isolation guidance.
+
+## Dashboards and antivirus
 The XFCE profile includes lightweight system monitors, ClamAV, and ClamUI. Custom commands include `darth-center` and `darth-av-scan`; see [docs/SECURITY-TOOLKIT.md](docs/SECURITY-TOOLKIT.md). Real-time antivirus scanning is opt-in because of memory cost.
 
 ## Layout
