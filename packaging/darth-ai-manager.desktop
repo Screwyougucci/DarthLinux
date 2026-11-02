@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Darth AI Model Manager
+Comment=Download Hugging Face GGUF models and run them locally
+Exec=darth-ai-manager
+Icon=applications-science
+Terminal=false
+Categories=System;Development;Science;
+StartupNotify=true
