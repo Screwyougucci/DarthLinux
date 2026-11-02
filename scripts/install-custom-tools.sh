@@ -4,4 +4,6 @@ set -Eeuo pipefail
 ROOT="$(cd -- "$(dirname -- "$0")/.." && pwd)"
 install -Dm755 "$ROOT/tools/darth-audit" /usr/local/bin/darth-audit
 install -Dm755 "$ROOT/tools/darth-scope-scan" /usr/local/bin/darth-scope-scan
-echo "Installed: darth-audit, darth-scope-scan"
+install -Dm755 "$ROOT/tools/darth-center" /usr/local/bin/darth-center
+install -Dm755 "$ROOT/tools/darth-av-scan" /usr/local/bin/darth-av-scan
+echo "Installed: darth-audit, darth-scope-scan, darth-center, darth-av-scan"
