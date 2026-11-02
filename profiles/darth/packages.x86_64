@@ -94,3 +94,7 @@ jq
 ripgrep
 python
 python-pip
+
+# Local AI model manager (Hugging Face downloads + CPU-capable llama.cpp)
+python-huggingface-hub
+llama-cpp
