@@ -72,6 +72,18 @@ Unless otherwise noted, project source and original artwork are offered under th
 
 The Control Center includes **Darth Proxy**, a utility for saving multiple provider-supplied HTTP or SOCKS5 residential proxy profiles, switching between them, testing connectivity, and starting a fresh provider session when the provider documents a session-ID username format. It launches dedicated Firefox profiles and does not route all system traffic. Read [docs/DARTH-PROXY.md](docs/DARTH-PROXY.md) for setup, privacy notes, and limitations.
 
-## Booted desktop experience\n\nDarth Linux is configured to boot to a graphical LightDM login and XFCE desktop. The default top panel includes a searchable Whisker application menu, running-window list, system tray, volume control, and clock. A Plank dock starts with Firefox, file manager, terminal, and the Darth Settings, Control Center, and AI Manager launchers. NetworkManager, Bluetooth, and power applets start with the desktop session. See [docs/DESKTOP-BOOT.md](docs/DESKTOP-BOOT.md).\n\n## Expanded System Settings\n\nDarth Settings adds dedicated Audio, Display, Video, Network, Security, and System pages. It includes output-volume and mute controls through PipeWire, microphone/device configuration through the audio mixer, display configuration, laptop brightness shortcuts, webcam controls, MPV playback, and system/network utilities. Hardware-dependent controls require supported devices and permissions. See [docs/DARTH-SETTINGS.md](docs/DARTH-SETTINGS.md).\n\n## Local AI Model Manager
+## Booted desktop experience
+
+Darth Linux is configured to boot to a graphical LightDM login and XFCE desktop. The default top panel includes a searchable Whisker application menu, running-window list, system tray, volume control, and clock. A Plank dock starts with Firefox, file manager, terminal, and the Darth Settings, Control Center, and AI Manager launchers. NetworkManager, Bluetooth, and power applets start with the desktop session. See [docs/DESKTOP-BOOT.md](docs/DESKTOP-BOOT.md).
+
+## Expanded System Settings
+
+Darth Settings adds dedicated Audio, Display, Video, Network, Security, and System pages. It includes output-volume and mute controls through PipeWire, microphone/device configuration through the audio mixer, display configuration, laptop brightness shortcuts, webcam controls, MPV playback, and system/network utilities. Hardware-dependent controls require supported devices and permissions. See [docs/DARTH-SETTINGS.md](docs/DARTH-SETTINGS.md).
+
+## Local AI Model Manager
 
 Darth Linux includes **Darth AI Model Manager**, a GTK desktop utility for downloading GGUF models from Hugging Face and running them locally with llama.cpp. It supports CPU inference, local model storage, a loopback-only chat UI, and stop/start controls. See [docs/DARTH-AI-MANAGER.md](docs/DARTH-AI-MANAGER.md) for model selection, hardware guidance, and security notes.
+
+## Darth Linux 0.2 planning
+
+The 0.2 release is being planned as **The Security Awakening**, with Command Center, Sentinel Antivirus, Guardian Firewall, Desktop 2.0, Darth Store, Darth AI, Darth Red Lab, Darth Privacy, Darth Lockdown, Darth Recovery, and Watchtower. These are roadmap goals, not a claim that all features are implemented. See [docs/DARTH-WATCHTOWER-0.2.md](docs/DARTH-WATCHTOWER-0.2.md) for the Watchtower visual editions, analytics panels, customization features, security requirements, and proposed acceptance tests.
