@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""Darth AI Manager: download GGUF models from Hugging Face and run them locally."""
+import os
+import re
+import shutil
+import subprocess
+from pathlib import Path
+import gi
+
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gtk, Gio, GLib
+
+MODEL_DIR = Path.home() / "AI" / "models"
+LOG_DIR = Path.home() / ".local" / "state" / "darth-ai"
+SERVER_LOG = LOG_DIR / "llama-server.log"
+SERVER_PORT = 8080
+CONTEXT_SIZE = 2048
+
+class AIManager(Gtk.Application):
+    def __init__(self):
+        super().__init__(application_id="org.darthlinux.AIManager",
+                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+        self.download_proc = None
+        self.server_proc = None
+
+    def do_activate(self):
+        win = Gtk.ApplicationWindow(application=self, title="Darth Linux // AI Model Manager")
+        win.set_default_size(700, 680)
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        root.set_margin_top(20); root.set_margin_bottom(20)
+        root.set_margin_start(22); root.set_margin_end(22)
+        win.set_child(root)
+
+        title = Gtk.Label(label="DARTH AI // LOCAL MODEL MANAGER")
+        title.add_css_class("title-1"); title.set_halign(Gtk.Align.START)
+        root.append(title)
+        intro = Gtk.Label(label="Find a GGUF model on Hugging Face, download it to this computer, and run it locally with llama.cpp. CPU mode is supported; larger models need more RAM.")
+        intro.set_wrap(True); intro.set_xalign(0)
+        root.append(intro)
+
+        download_frame = Gtk.Frame(label="Download from Hugging Face")
+        root.append(download_frame)
+        download_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        download_box.set_margin_top(10); download_box.set_margin_bottom(10)
+        download_box.set_margin_start(12); download_box.set_margin_end(12)
+        download_frame.set_child(download_box)
+        self.repo = Gtk.Entry(placeholder_text="Repository ID, e.g. bartowski/Qwen2.5-3B-Instruct-GGUF")
+        self.filename = Gtk.Entry(placeholder_text="Exact GGUF filename, e.g. Qwen2.5-3B-Instruct-Q4_K_M.gguf")
+        download_box.append(Gtk.Label(label="Hugging Face repository ID", xalign=0))
+        download_box.append(self.repo)
+        download_box.append(Gtk.Label(label="Exact GGUF filename", xalign=0))
+        download_box.append(self.filename)
+        dlrow = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        download_box.append(dlrow)
+        self.download_button = Gtk.Button(label="Download model")
+        self.download_button.connect("clicked", self.download_model)
+        dlrow.append(self.download_button)
+        self.cancel_button = Gtk.Button(label="Cancel download")
+        self.cancel_button.connect("clicked", self.cancel_download)
+        self.cancel_button.set_sensitive(False)
+        dlrow.append(self.cancel_button)
+
+        local_frame = Gtk.Frame(label="Models on this computer")
+        root.append(local_frame)
+        local_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        local_box.set_margin_top(10); local_box.set_margin_bottom(10)
+        local_box.set_margin_start(12); local_box.set_margin_end(12)
+        local_frame.set_child(local_box)
+        self.model_select = Gtk.DropDown.new_from_strings(["No GGUF models found"])
+        self.model_select.set_hexpand(True)
+        local_box.append(self.model_select)
+        modelrow = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        local_box.append(modelrow)
+        refresh = Gtk.Button(label="Refresh list")
+        refresh.connect("clicked", lambda *_: self.refresh_models())
+        modelrow.append(refresh)
+        self.run_button = Gtk.Button(label="Run selected model")
+        self.run_button.add_css_class("suggested-action")
+        self.run_button.connect("clicked", self.run_model)
+        modelrow.append(self.run_button)
+        self.stop_button = Gtk.Button(label="Stop local AI")
+        self.stop_button.connect("clicked", self.stop_server)
+        modelrow.append(self.stop_button)
+
+        self.status = Gtk.Label(label="Ready. Public Hugging Face repositories can be downloaded without signing in.")
+        self.status.set_wrap(True); self.status.set_xalign(0)
+        root.append(self.status)
+        self.progress = Gtk.ProgressBar()
+        root.append(self.progress)
+        self.server_status = Gtk.Label(label="Local inference server: stopped")
+        self.server_status.set_xalign(0)
+        root.append(self.server_status)
+
+        notes = Gtk.Label(label="Hardware guidance: start with a 1B–3B instruct GGUF in Q4_K_M quantization on low-RAM/CPU-only machines. 7B Q4 models often need around 5 GB or more just for model weights, plus runtime memory. Downloads can be several GB. Check each model's license and Hugging Face repository before downloading. Models run on this computer; the local Web UI binds only to 127.0.0.1.")
+        notes.set_wrap(True); notes.set_xalign(0); notes.add_css_class("dim-label")
+        root.append(notes)
+        self.refresh_models()
+        self.check_dependencies()
+        win.present()
+
+    def check_dependencies(self):
+        missing = [name for name in ("hf", "llama-server") if not shutil.which(name)]
+        if missing:
+            self.status.set_text("Missing required command(s): " + ", ".join(missing) + ". Install packages python-huggingface-hub and llama-cpp with pacman.")
+        else:
+            self.status.set_text("Ready. Enter a Hugging Face repo ID and exact .gguf filename, or select a downloaded model.")
+
+    def refresh_models(self):
+        MODEL_DIR.mkdir(parents=True, exist_ok=True)
+        models = sorted(str(p) for p in MODEL_DIR.rglob("*.gguf") if p.is_file())
+        self.models = models
+        labels = [Path(p).name + " — " + str(Path(p).parent) for p in models] or ["No GGUF models found"]
+        self.model_select.set_model(Gtk.StringList.new(labels))
+        self.model_select.set_selected(0)
+
+    def download_model(self, *_):
+        if self.download_proc and self.download_proc.poll() is None:
+            self.status.set_text("A download is already running.")
+            return
+        repo = self.repo.get_text().strip()
+        filename = self.filename.get_text().strip()
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
+            self.status.set_text("Enter a valid Hugging Face repository ID in owner/repository format.")
+            return
+        if not filename.endswith(".gguf") or "/" in filename or "\\" in filename or ".." in filename:
+            self.status.set_text("Enter the exact GGUF filename only (no path).")
+            return
+        MODEL_DIR.mkdir(parents=True, exist_ok=True)
+        target = MODEL_DIR / repo.replace("/", "--")
+        target.mkdir(parents=True, exist_ok=True)
+        cmd = ["hf", "download", repo, filename, "--local-dir", str(target)]
+        try:
+            self.download_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            self.download_button.set_sensitive(False)
+            self.cancel_button.set_sensitive(True)
+            self.status.set_text("Downloading from Hugging Face: " + repo + " / " + filename)
+            GLib.timeout_add(700, self.poll_download)
+        except OSError as exc:
+            self.status.set_text("Could not start hf download: " + str(exc))
+
+    def poll_download(self):
+        if not self.download_proc:
+            return GLib.SOURCE_REMOVE
+        code = self.download_proc.poll()
+        if code is None:
+            return GLib.SOURCE_CONTINUE
+        self.download_button.set_sensitive(True)
+        self.cancel_button.set_sensitive(False)
+        self.download_proc = None
+        if code == 0:
+            self.status.set_text("Download completed. Refresh the local model list.")
+            self.refresh_models()
+        else:
+            self.status.set_text("Download failed (exit " + str(code) + "). Check the repository, filename, network, and model access permissions.")
+        return GLib.SOURCE_REMOVE
+
+    def cancel_download(self, *_):
+        if self.download_proc and self.download_proc.poll() is None:
+            self.download_proc.terminate()
+            self.status.set_text("Download cancellation requested.")
+        self.download_button.set_sensitive(True)
+        self.cancel_button.set_sensitive(False)
+
+    def run_model(self, *_):
+        if not self.models:
+            self.status.set_text("No local GGUF model found. Download one first.")
+            return
+        idx = self.model_select.get_selected()
+        if idx >= len(self.models):
+            return
+        if not shutil.which("llama-server"):
+            self.status.set_text("llama-server is missing. Install llama-cpp with pacman.")
+            return
+        if self.server_proc and self.server_proc.poll() is None:
+            self.status.set_text("A local model server is already running. Stop it before switching models.")
+            return
+        model = self.models[idx]
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        log = open(SERVER_LOG, "a", encoding="utf-8")
+        try:
+            self.server_proc = subprocess.Popen(
+                ["llama-server", "--host", "127.0.0.1", "--port", str(SERVER_PORT),
+                 "--ctx-size", str(CONTEXT_SIZE), "--threads", str(max(1, (os.cpu_count() or 2) - 1)),
+                 "--model", model],
+                stdout=log, stderr=subprocess.STDOUT, start_new_session=True
+            )
+            self.server_log_handle = log
+            self.server_status.set_text("Starting: " + Path(model).name + " — http://127.0.0.1:" + str(SERVER_PORT))
+            self.status.set_text("Starting local inference. First load may take a minute; check the server log if it fails.")
+            GLib.timeout_add(1500, self.check_server)
+        except OSError as exc:
+            log.close()
+            self.status.set_text("Could not start llama-server: " + str(exc))
+
+    def check_server(self):
+        if self.server_proc and self.server_proc.poll() is None:
+            return GLib.SOURCE_CONTINUE
+        self.server_status.set_text("Local inference server: stopped")
+        self.status.set_text("llama-server exited. Review " + str(SERVER_LOG))
+        if getattr(self, "server_log_handle", None):
+            self.server_log_handle.close()
+            self.server_log_handle = None
+        self.server_proc = None
+        return GLib.SOURCE_REMOVE
+
+    def stop_server(self, *_):
+        if self.server_proc and self.server_proc.poll() is None:
+            self.server_proc.terminate()
+            self.server_status.set_text("Stopping local inference server…")
+            self.status.set_text("Stop requested.")
+        else:
+            self.server_status.set_text("Local inference server: stopped")
+
+app = AIManager()
+app.run(None)
