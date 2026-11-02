@@ -7,7 +7,7 @@ OUT_DIR="$ROOT_DIR/out"
 BASE_PROFILE="/usr/share/archiso/configs/releng"
 
 die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
-[[ $EUID -eq 0 ]] || die "Run with sudo: sudo ./build.sh"
+[[ $EUID -eq 0 ]] || die "Run with sudo: sudo bash ./build.sh"
 command -v mkarchiso >/dev/null 2>&1 || die "Install archiso: sudo pacman -S archiso"
 [[ -d "$BASE_PROFILE" ]] || die "Official Archiso releng profile not found at $BASE_PROFILE"
 [[ -f "$PROFILE_DIR/packages.x86_64" ]] || die "Missing project package list"
@@ -18,6 +18,12 @@ trap 'rm -rf "$TMP_PROFILE"' EXIT
 cp -a "$BASE_PROFILE/." "$TMP_PROFILE/"
 cat "$PROFILE_DIR/packages.x86_64" >> "$TMP_PROFILE/packages.x86_64"
 cp -a "$PROFILE_DIR/airootfs/." "$TMP_PROFILE/airootfs/"
+# Convert text placeholders into real systemd unit symlinks in the build tree.
+for unit in NetworkManager nftables; do
+  link="$TMP_PROFILE/airootfs/etc/systemd/system/multi-user.target.wants/$unit.service"
+  rm -f "$link"
+  ln -s "../../../../usr/lib/systemd/system/$unit.service" "$link"
+done
 sed -i 's/^iso_label=.*/iso_label="DARTH_LINUX"/' "$TMP_PROFILE/profiledef.sh"
 sed -i 's/^iso_name=.*/iso_name="darth-linux"/' "$TMP_PROFILE/profiledef.sh"
 sed -i 's/^iso_publisher=.*/iso_publisher="Darth Linux Project"/' "$TMP_PROFILE/profiledef.sh"
