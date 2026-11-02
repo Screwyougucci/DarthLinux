@@ -63,4 +63,4 @@ No boot test, hardware compatibility test, installer test, or encryption verific
 
 ## License
 Unless otherwise noted, project source and original artwork are offered under the MIT License. Third-party components retain their own licenses.
-\n## Residential proxy setup\n\nThe Control Center includes **Darth Proxy**, a small utility for configuring and testing a provider-supplied HTTP or SOCKS5 residential proxy in a separate Firefox profile. It stores credentials locally with owner-only permissions and does not route all system traffic. Read [docs/DARTH-PROXY.md](docs/DARTH-PROXY.md) for setup, privacy notes, and limitations.\n
+\n## Residential proxy setup\n\nThe Control Center includes **Darth Proxy**, a utility for saving multiple provider-supplied HTTP or SOCKS5 residential proxy profiles, switching between them, testing connectivity, and starting a fresh provider session when the provider documents a session-ID username format. It launches dedicated Firefox profiles and does not route all system traffic. Read [docs/DARTH-PROXY.md](docs/DARTH-PROXY.md) for setup, privacy notes, and limitations.\n
