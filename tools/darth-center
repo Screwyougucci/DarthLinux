@@ -22,7 +22,7 @@ def cpu():
     try:
         def sample():
             vals=list(map(int,Path("/proc/stat").read_text().splitlines()[0].split()[1:]))
-            return sum(vals), vals[3]+(vals[4] if len(vals)>4 else 0)
+            return sum(vals[:8]), vals[3]+(vals[4] if len(vals)>4 else 0)
         t1,i1=sample(); time.sleep(.2); t2,i2=sample()
         return f"{100*(1-(i2-i1)/max(1,t2-t1)):.1f}%"
     except Exception: return "unavailable"
