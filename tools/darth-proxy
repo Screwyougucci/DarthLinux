@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+"""Darth Proxy: configure a user-supplied proxy for a dedicated Firefox profile."""
+import configparser
+import json
+import os
+import re
+import subprocess
+from pathlib import Path
+import gi
+
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gtk, Gio
+
+CONFIG_DIR = Path.home() / ".config" / "darth-linux"
+CONFIG_FILE = CONFIG_DIR / "proxy.json"
+PROFILE_DIR = Path.home() / ".mozilla" / "darth-proxy-profile"
+TEST_URL = "https://api.ipify.org"
+
+def curl_quote(value):
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "") + '"'
+
+class ProxyApp(Gtk.Application):
+    def __init__(self):
+        super().__init__(application_id="org.darthlinux.ProxySetup",
+                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+
+    def do_activate(self):
+        self.win = Gtk.ApplicationWindow(application=self, title="Darth Linux // Proxy Setup")
+        self.win.set_default_size(540, 610)
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        root.set_margin_top(22); root.set_margin_bottom(22)
+        root.set_margin_start(24); root.set_margin_end(24)
+        self.win.set_child(root)
+
+        heading = Gtk.Label(label="DARTH PROXY")
+        heading.add_css_class("title-1"); heading.set_halign(Gtk.Align.START)
+        root.append(heading)
+        intro = Gtk.Label(label="Connect Firefox through a residential proxy supplied by a provider you trust. This does not change system-wide traffic.")
+        intro.set_wrap(True); intro.set_xalign(0)
+        root.append(intro)
+
+        form = Gtk.Grid(column_spacing=10, row_spacing=10)
+        root.append(form)
+        self.kind = Gtk.DropDown.new_from_strings(["HTTP / HTTPS", "SOCKS5"])
+        self.host = Gtk.Entry(placeholder_text="proxy.example.net")
+        self.port = Gtk.Entry(placeholder_text="8080")
+        self.username = Gtk.Entry(placeholder_text="Optional username")
+        self.password = Gtk.PasswordEntry()
+        self.password.set_show_peek_icon(True)
+        self.status = Gtk.Label(label="Enter the proxy details provided by your provider.")
+        self.status.set_wrap(True); self.status.set_xalign(0)
+
+        fields = [
+            ("Proxy type", self.kind), ("Hostname or IP", self.host),
+            ("Port", self.port), ("Username", self.username),
+            ("Password", self.password)
+        ]
+        for row, (label, widget) in enumerate(fields):
+            lab = Gtk.Label(label=label); lab.set_xalign(0)
+            form.attach(lab, 0, row, 1, 1)
+            widget.set_hexpand(True)
+            form.attach(widget, 1, row, 1, 1)
+
+        actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        root.append(actions)
+        test = Gtk.Button(label="Test proxy")
+        test.connect("clicked", self.test_proxy)
+        actions.append(test)
+        save = Gtk.Button(label="Save & launch Firefox")
+        save.add_css_class("suggested-action")
+        save.connect("clicked", self.save_and_launch)
+        actions.append(save)
+        clear = Gtk.Button(label="Clear saved proxy")
+        clear.connect("clicked", self.clear_proxy)
+        root.append(clear)
+        root.append(self.status)
+
+        warning = Gtk.Label(label="Privacy note: credentials are stored locally with owner-only file permissions. Firefox may prompt for proxy authentication. The test contacts api.ipify.org to display the public IP seen through the proxy. A proxy is not encryption for all traffic and does not guarantee anonymity.")
+        warning.set_wrap(True); warning.set_xalign(0)
+        warning.add_css_class("dim-label")
+        root.append(warning)
+        self.load_saved()
+        self.win.present()
+
+    def read_form(self):
+        host = self.host.get_text().strip()
+        port_text = self.port.get_text().strip()
+        if not host or not re.fullmatch(r"[A-Za-z0-9.:-]+", host):
+            raise ValueError("Enter a valid hostname or IP address (no URL or path).")
+        if not port_text.isdigit() or not 1 <= int(port_text) <= 65535:
+            raise ValueError("Port must be a number from 1 to 65535.")
+        username = self.username.get_text()
+        password = self.password.get_text()
+        if (username and not password) or (password and not username):
+            raise ValueError("Enter both username and password, or leave both blank.")
+        return {
+            "type": "socks5" if self.kind.get_selected() == 1 else "http",
+            "host": host, "port": int(port_text),
+            "username": username, "password": password
+        }
+
+    def proxy_url(self, cfg):
+        scheme = "socks5h" if cfg["type"] == "socks5" else "http"
+        return f"{scheme}://{cfg['host']}:{cfg['port']}"
+
+    def test_proxy(self, *_):
+        try:
+            cfg = self.read_form()
+            proxy = self.proxy_url(cfg)
+            lines = ["url = " + curl_quote(TEST_URL),
+                     "proxy = " + curl_quote(proxy),
+                     "connect-timeout = 10", "max-time = 20",
+                     "silent", "show-error"]
+            if cfg["username"]:
+                lines.append("proxy-user = " + curl_quote(cfg["username"] + ":" + cfg["password"]))
+            result = subprocess.run(["curl", "--config", "-"], input="\n".join(lines) + "\n",
+                                    text=True, capture_output=True, timeout=25)
+            ip = result.stdout.strip()
+            if result.returncode == 0 and re.fullmatch(r"[0-9a-fA-F:.]+", ip):
+                self.status.set_text("Proxy test succeeded. Public IP reported by test endpoint: " + ip)
+            else:
+                self.status.set_text("Proxy test failed: " + (result.stderr.strip() or "No valid IP response. Check host, port, credentials and provider access."))
+        except (ValueError, OSError, subprocess.TimeoutExpired) as exc:
+            self.status.set_text("Could not test proxy: " + str(exc))
+
+    def save_and_launch(self, *_):
+        try:
+            cfg = self.read_form()
+            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            CONFIG_FILE.write_text(json.dumps(cfg), encoding="utf-8")
+            os.chmod(CONFIG_FILE, 0o600)
+            PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+            host, port = cfg["host"], cfg["port"]
+            if cfg["type"] == "socks5":
+                prefs = [
+                    'user_pref("network.proxy.type", 1);',
+                    'user_pref("network.proxy.socks", ' + json.dumps(host) + ');',
+                    'user_pref("network.proxy.socks_port", ' + str(port) + ');',
+                    'user_pref("network.proxy.socks_version", 5);',
+                    'user_pref("network.proxy.socks_remote_dns", true);',
+                    'user_pref("network.proxy.http", "");',
+                    'user_pref("network.proxy.ssl", "");'
+                ]
+            else:
+                prefs = [
+                    'user_pref("network.proxy.type", 1);',
+                    'user_pref("network.proxy.http", ' + json.dumps(host) + ');',
+                    'user_pref("network.proxy.http_port", ' + str(port) + ');',
+                    'user_pref("network.proxy.ssl", ' + json.dumps(host) + ');',
+                    'user_pref("network.proxy.ssl_port", ' + str(port) + ');',
+                    'user_pref("network.proxy.share_proxy_settings", true);'
+                ]
+            prefs += [
+                'user_pref("network.proxy.no_proxies_on", "");',
+                'user_pref("network.proxy.failover_direct", false);'
+            ]
+            (PROFILE_DIR / "user.js").write_text("\n".join(prefs) + "\n", encoding="utf-8")
+            os.chmod(PROFILE_DIR / "user.js", 0o600)
+            subprocess.Popen(["firefox", "--no-remote", "--profile", str(PROFILE_DIR)])
+            self.status.set_text("Saved securely and launched a dedicated Firefox profile. Firefox may ask for proxy credentials.")
+        except (ValueError, OSError) as exc:
+            self.status.set_text("Could not save or launch: " + str(exc))
+
+    def load_saved(self):
+        try:
+            cfg = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+            self.kind.set_selected(1 if cfg.get("type") == "socks5" else 0)
+            self.host.set_text(cfg.get("host", ""))
+            self.port.set_text(str(cfg.get("port", "")))
+            self.username.set_text(cfg.get("username", ""))
+            self.password.set_text(cfg.get("password", ""))
+            self.status.set_text("Loaded saved local proxy settings.")
+        except (OSError, ValueError, TypeError):
+            pass
+
+    def clear_proxy(self, *_):
+        try:
+            CONFIG_FILE.unlink(missing_ok=True)
+            (PROFILE_DIR / "user.js").unlink(missing_ok=True)
+            self.host.set_text(""); self.port.set_text("")
+            self.username.set_text(""); self.password.set_text("")
+            self.status.set_text("Saved settings and dedicated Firefox proxy preferences cleared. Close the proxy Firefox window.")
+        except OSError as exc:
+            self.status.set_text("Could not clear settings: " + str(exc))
+
+app = ProxyApp()
+app.run(None)
