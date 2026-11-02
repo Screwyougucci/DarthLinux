@@ -37,6 +37,8 @@ if args.cmd == "backup":
     archive = Path(args.archive).expanduser().resolve()
     if not source.exists():
         sys.exit("Source does not exist.")
+    if archive.exists():
+        sys.exit("Archive already exists; choose a new path to avoid overwriting existing data.")
     if archive == source or (source.is_dir() and source in archive.parents):
         sys.exit("Archive must be outside the source; refusing to overwrite or back up itself.")
     archive.parent.mkdir(parents=True, exist_ok=True)
