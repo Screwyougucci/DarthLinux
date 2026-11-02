@@ -114,3 +114,13 @@ v4l-utils
 guvcview
 mpv
 ffmpeg
+
+# Desktop experience: dock, application menu, tray and hardware controls
+plank
+xfce4-whiskermenu-plugin
+xfce4-pulseaudio-plugin
+xfce4-power-manager
+xfce4-notifyd
+blueman
+thunar-archive-plugin
+file-roller
