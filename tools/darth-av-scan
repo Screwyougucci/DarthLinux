@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+if [[ $# -ne 1 ]]; then
+  echo "Usage: darth-av-scan /path/to/scan" >&2
+  exit 2
+fi
+command -v clamscan >/dev/null 2>&1 || { echo "ClamAV is not installed." >&2; exit 1; }
+TARGET="$(realpath -- "$1")"
+[[ -e "$TARGET" ]] || { echo "Target does not exist: $TARGET" >&2; exit 1; }
+echo "Updating ClamAV signatures (if configured)..."
+if command -v freshclam >/dev/null 2>&1; then
+  freshclam || echo "Warning: signature update failed; scan will use the currently installed database." >&2
+fi
+echo "Scanning: $TARGET"
+echo "No files will be automatically deleted or quarantined."
+clamscan --infected --recursive --log="$HOME/darth-clamav-scan.log" -- "$TARGET"
+status=$?
+if [[ $status -eq 0 ]]; then
+  echo "Scan complete: no detections."
+elif [[ $status -eq 1 ]]; then
+  echo "Scan complete: detections found. Review $HOME/darth-clamav-scan.log; do not open flagged files."
+else
+  echo "ClamAV scan failed (exit $status). Check the log and signature database." >&2
+fi
+exit "$status"
