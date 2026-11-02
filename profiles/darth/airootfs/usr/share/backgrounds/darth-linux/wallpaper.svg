@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+<defs>
+  <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#090a0d"/><stop offset=".55" stop-color="#15171d"/><stop offset="1" stop-color="#07080a"/></linearGradient>
+  <radialGradient id="glow"><stop stop-color="#8f1026" stop-opacity=".30"/><stop offset="1" stop-color="#8f1026" stop-opacity="0"/></radialGradient>
+  <linearGradient id="blade" x2="0" y2="1"><stop stop-color="#ff4b61"/><stop offset="1" stop-color="#7d071b"/></linearGradient>
+</defs>
+<rect width="1920" height="1080" fill="url(#bg)"/>
+<circle cx="1430" cy="500" r="620" fill="url(#glow)"/>
+<g fill="none" stroke="#343840" stroke-width="2" opacity=".45">
+  <path d="M0 180H1920M0 900H1920M180 0V1080M1740 0V1080"/>
+  <path d="M0 260L500 0M1420 1080L1920 820M0 820L450 1080M1460 0L1920 250"/>
+</g>
+<g transform="translate(1440 500)" fill="none" stroke="url(#blade)" stroke-width="16" stroke-linejoin="round">
+  <path d="M0-300L190-170L155 120L0 285L-155 120L-190-170Z"/>
+  <path d="M0-215L112-137L91 87L0 190L-91 87L-112-137Z" stroke-width="7" opacity=".8"/>
+  <path d="M-230-45H230M0-300V285" stroke-width="5" opacity=".65"/>
+</g>
+<g fill="#f0edf0" font-family="Arial,Helvetica,sans-serif">
+  <text x="170" y="465" font-size="34" letter-spacing="12" fill="#b8bac2">ARCH-BASED • SECURITY-FOCUSED</text>
+  <text x="160" y="585" font-size="112" font-weight="700" letter-spacing="4">DARTH LINUX</text>
+  <rect x="170" y="635" width="380" height="5" fill="#b5122b"/>
+  <text x="170" y="700" font-size="28" letter-spacing="6" fill="#a5a7af">CONTROL YOUR SYSTEM.</text>
+  <text x="170" y="748" font-size="28" letter-spacing="6" fill="#a5a7af">PROTECT YOUR WORK.</text>
+</g>
+<g fill="#777b85" font-family="monospace" font-size="16" letter-spacing="3">
+  <text x="170" y="1000">DARTH LINUX / DEVELOPMENT BUILD</text>
+  <text x="1550" y="1000">SITH // GRAPHITE</text>
+</g>
+</svg>
