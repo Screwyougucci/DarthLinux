@@ -13,12 +13,18 @@ from pathlib import Path
 parser = argparse.ArgumentParser(
     description="Scan files with ClamAV; detections are never silently deleted."
 )
-parser.add_argument("target", help="File or directory to scan")
+parser.add_argument("target", nargs="?", help="File or directory to scan")
 parser.add_argument(
     "--quarantine", action="store_true",
     help="Move confirmed detections to a private quarantine after asking",
 )
 args = parser.parse_args()
+if args.target is None:
+    if not sys.stdin.isatty():
+        parser.error("target is required when not running interactively")
+    args.target = input("File or folder to scan: ").strip()
+    if not args.target:
+        sys.exit("No scan target supplied.")
 target = Path(args.target).expanduser().resolve()
 if not target.exists():
     sys.exit("Target does not exist.")
