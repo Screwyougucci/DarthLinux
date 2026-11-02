@@ -93,6 +93,14 @@ class DarthSettings(Gtk.Application):
                 d.add_css_class("dim"); parent.append(d)
             return b
 
+        def media_controls(parent):
+            transport = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            for label, verb in [("Previous", "previous"), ("Play / Pause", "play-pause"), ("Next", "next")]:
+                button = Gtk.Button(label=label)
+                button.connect("clicked", lambda _button, action=verb: command(["playerctl", action]))
+                transport.append(button)
+            parent.append(transport)
+
         # Audio
         audio = page("Audio")
         a = section(audio, "OUTPUT VOLUME", "Adjust the default PipeWire/PulseAudio output. Changes apply immediately.")
@@ -116,6 +124,7 @@ class DarthSettings(Gtk.Application):
         mute = Gtk.Button(label="Toggle mute")
         mute.connect("clicked", lambda *_: command(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]))
         a.append(mute)
+        media_controls(a)
         action(a, "Open advanced audio mixer", ["pavucontrol"], "Choose output devices, input devices, per-app volume and profiles.")
         action(a, "Open XFCE sound settings", ["xfce4-settings-manager"])
 
@@ -139,6 +148,7 @@ class DarthSettings(Gtk.Application):
         # Video and camera
         video = page("Video")
         v = section(video, "VIDEO PLAYBACK", "Play local video and audio files with MPV. No media is uploaded.")
+        media_controls(v)
         action(v, "Open MPV media player", ["mpv"])
         action(v, "Open file manager", ["thunar"])
         cam = section(video, "WEBCAM / CAMERA", "Inspect and adjust supported USB camera controls. Camera availability depends on hardware and permissions.")
