@@ -146,7 +146,6 @@ mesa
 vulkan-intel
 vulkan-radeon
 libva-mesa-driver
-mesa-vdpau
 pciutils
 usbutils
 rfkill
