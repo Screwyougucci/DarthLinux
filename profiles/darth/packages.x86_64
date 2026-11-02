@@ -63,7 +63,8 @@ mtr
 openbsd-netcat
 # Web application testing (authorized targets only)
 nikto
-sqlmapgobuster
+sqlmap
+gobuster
 # Wireless auditing (owned lab equipment only)
 aircrack-ng
 hcxtools
