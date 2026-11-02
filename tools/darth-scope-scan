@@ -2,8 +2,11 @@
 """Darth Scope Scan: bounded Nmap host discovery for authorized private labs."""
 import argparse,ipaddress,shutil,subprocess,sys
 p=argparse.ArgumentParser(description="Host discovery for an explicitly authorized private lab network.")
-p.add_argument("cidr",help="Private IPv4 range no larger than /24, e.g. 192.168.56.0/24")
+p.add_argument("cidr",nargs="?",help="Private IPv4 range no larger than /24, e.g. 192.168.56.0/24")
 a=p.parse_args()
+if a.cidr is None:
+ if not sys.stdin.isatty(): p.error("cidr is required when not running interactively")
+ a.cidr=input("Private lab CIDR (maximum /24): ").strip()
 try: net=ipaddress.ip_network(a.cidr,strict=False)
 except ValueError as e: sys.exit(f"Invalid network: {e}")
 if not isinstance(net,ipaddress.IPv4Network) or not net.is_private: sys.exit("Blocked: only private IPv4 ranges are accepted.")
