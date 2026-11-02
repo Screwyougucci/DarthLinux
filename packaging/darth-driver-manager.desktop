@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Darth Driver Manager
+Comment=Hardware inventory and driver diagnostics
+Exec=darth-driver-manager
+Icon=preferences-system
+Terminal=false
+Categories=System;Settings;

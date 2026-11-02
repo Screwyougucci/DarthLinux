@@ -72,7 +72,11 @@ class ControlCenter(Gtk.Application):
         refresh()
 
         grid = Gtk.Grid(column_spacing=10, row_spacing=10)
-        root.append(grid)
+        scroller = Gtk.ScrolledWindow()
+        scroller.set_vexpand(True)
+        scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroller.set_child(grid)
+        root.append(scroller)
 
         def launch(label, command, description, col, row):
             button = Gtk.Button()
@@ -97,6 +101,15 @@ class ControlCenter(Gtk.Application):
         launch("Residential Proxy", ["darth-proxy"], "Configure and test your provider proxy in Firefox", 0, 4)
         launch("AI Model Manager", ["darth-ai-manager"], "Download Hugging Face GGUF models and run locally", 1, 4)
         launch("System Settings", ["darth-settings"], "Audio, display, webcam, video, network and security", 0, 5)
+        launch("Watchtower", ["darth-watchtower"], "Live CPU, memory, disk, network and defense status", 1, 5)
+        launch("Driver Manager", ["darth-driver-manager"], "Hardware inventory and driver diagnostics", 0, 6)
+        launch("Darth Store", ["darth-store"], "Search and install from trusted pacman repositories", 1, 6)
+        launch("Guardian Firewall", ["xfce4-terminal", "--command", "darth-guardian status"], "Inspect and manage nftables", 0, 7)
+        launch("Sentinel Antivirus", ["xfce4-terminal", "--command", "darth-sentinel"], "On-demand scanning and quarantine", 1, 7)
+        launch("Recovery", ["xfce4-terminal", "--command", "darth-recovery"], "Backup and restore user-selected data", 0, 8)
+        launch("Privacy", ["xfce4-terminal", "--command", "darth-privacy"], "Review local services and listening sockets", 1, 8)
+        launch("Lockdown", ["darth-lockdown"], "Lock the current desktop session", 0, 9)
+        launch("Red Lab", ["xfce4-terminal", "--command", "darth-redlab"], "Authorized security lab tool status", 1, 9)
 
         refresh_button = Gtk.Button(label="Refresh VPN / firewall status")
         refresh_button.connect("clicked", refresh)

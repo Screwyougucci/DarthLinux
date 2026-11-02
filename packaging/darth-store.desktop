@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Darth Store
+Comment=Install packages from configured Arch repositories
+Exec=darth-store
+Icon=system-software-install
+Terminal=false
+Categories=System;PackageManager;

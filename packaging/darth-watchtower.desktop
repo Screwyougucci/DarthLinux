@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Darth Watchtower
+Comment=Local system and security dashboard
+Exec=darth-watchtower
+Icon=utilities-system-monitor
+Terminal=false
+Categories=System;Monitor;
