@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+"""Darth Scope Scan: bounded Nmap host discovery for authorized private labs."""
+import argparse,ipaddress,shutil,subprocess,sys
+p=argparse.ArgumentParser(description="Host discovery for an explicitly authorized private lab network.")
+p.add_argument("cidr",help="Private IPv4 range no larger than /24, e.g. 192.168.56.0/24")
+a=p.parse_args()
+try: net=ipaddress.ip_network(a.cidr,strict=False)
+except ValueError as e: sys.exit(f"Invalid network: {e}")
+if not isinstance(net,ipaddress.IPv4Network) or not net.is_private: sys.exit("Blocked: only private IPv4 ranges are accepted.")
+if net.num_addresses>256: sys.exit("Blocked: range exceeds /24. Narrow the target scope.")
+if not shutil.which("nmap"): sys.exit("Nmap is not installed.")
+print(f"Target scope: {net}\nMode: host discovery only (no port scan or exploit checks).")
+if input("Type I HAVE PERMISSION to confirm authorization: ").strip()!="I HAVE PERMISSION": sys.exit("Cancelled.")
+try: subprocess.run(["nmap","-sn","-n",str(net)],check=False)
+except KeyboardInterrupt: sys.exit("\nCancelled by user.")
