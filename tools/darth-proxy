@@ -220,7 +220,11 @@ class ProxyApp(Gtk.Application):
 
     def proxy_url(self, cfg):
         scheme = "socks5h" if cfg["type"] == "socks5" else "http"
-        return f"{scheme}://{cfg['host']}:{cfg['port']}"
+        host = cfg["host"]
+        # URL authority syntax requires IPv6 literals to be enclosed in brackets.
+        if ":" in host and not host.startswith("["):
+            host = f"[{host}]"
+        return f"{scheme}://{host}:{cfg['port']}"
 
     def test_proxy(self, *_):
         try:
