@@ -140,3 +140,18 @@ xfce4-notifyd
 blueman
 thunar-archive-plugin
 file-roller
+
+# Darth Linux 0.2 applications and hardware support
+mesa
+vulkan-intel
+vulkan-radeon
+libva-mesa-driver
+mesa-vdpau
+pciutils
+usbutils
+rfkill
+cups
+system-config-printer
+sane
+sane-airscan
+libinput

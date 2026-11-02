@@ -24,7 +24,7 @@ BIN_DIR="$TMP_PROFILE/airootfs/usr/local/bin"
 APP_DIR="$TMP_PROFILE/airootfs/usr/share/applications"
 mkdir -p "$BIN_DIR" "$APP_DIR"
 for tool in darth-audit darth-scope-scan darth-center darth-av-scan \
-            darth-control-center darth-proxy darth-ai-manager darth-settings; do
+            darth-control-center darth-proxy darth-ai-manager darth-settings \\\n            darth-watchtower darth-driver-manager darth-store darth-guardian \\\n            darth-sentinel darth-recovery darth-privacy darth-lockdown darth-redlab; do
   [[ -f "$ROOT_DIR/tools/$tool" ]] || die "Missing custom tool: $tool"
   install -Dm755 "$ROOT_DIR/tools/$tool" "$BIN_DIR/$tool"
 done

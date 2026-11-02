@@ -8,7 +8,7 @@ on:
       - "build.sh"
       - "profiles/**"
       - "tools/**"
-      - "packaging/**"
+      - "packaging/**"\n      - "scripts/**"
       - ".github/workflows/build-iso.yml"
 
 permissions:

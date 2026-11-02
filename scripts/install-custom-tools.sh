@@ -9,7 +9,7 @@ install -Dm755 "$ROOT/tools/darth-av-scan" /usr/local/bin/darth-av-scan
 install -Dm755 "$ROOT/tools/darth-control-center" /usr/local/bin/darth-control-center
 install -Dm755 "$ROOT/tools/darth-proxy" /usr/local/bin/darth-proxy
 install -Dm755 "$ROOT/tools/darth-ai-manager" /usr/local/bin/darth-ai-manager
-install -Dm755 "$ROOT/tools/darth-settings" /usr/local/bin/darth-settings
+install -Dm755 "$ROOT/tools/darth-settings" /usr/local/bin/darth-settings\nfor tool in darth-watchtower darth-driver-manager darth-store darth-guardian darth-sentinel darth-recovery darth-privacy darth-lockdown darth-redlab; do\n  install -Dm755 "$ROOT/tools/$tool" "/usr/local/bin/$tool"\ndone
 install -Dm644 "$ROOT/packaging/darth-control-center.desktop" /usr/share/applications/darth-control-center.desktop
 install -Dm644 "$ROOT/packaging/darth-ai-manager.desktop" /usr/share/applications/darth-ai-manager.desktop
 install -Dm644 "$ROOT/packaging/darth-settings.desktop" /usr/share/applications/darth-settings.desktop
