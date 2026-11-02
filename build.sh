@@ -35,7 +35,10 @@ done
 for unit in NetworkManager nftables; do
   link="$TMP_PROFILE/airootfs/etc/systemd/system/multi-user.target.wants/$unit.service"
   rm -f "$link"
-  ln -s "../../../usr/lib/systemd/system/$unit.service" "$link"
+  ln -s "../../../../usr/lib/systemd/system/$unit.service" "$link"
+  expected="$TMP_PROFILE/airootfs/usr/lib/systemd/system/$unit.service"
+  actual="$(realpath -m "$link")"
+  [[ "$actual" == "$expected" ]] || die "Incorrect systemd link target for $unit: $actual"
 done
 # Boot to the graphical desktop and show the LightDM login screen.
 mkdir -p "$TMP_PROFILE/airootfs/etc/systemd/system/graphical.target.wants"
