@@ -76,9 +76,9 @@ gtk4
 python-gobject
 
 # VPN support through NetworkManager
+nm-connection-editor
 network-manager-applet
 networkmanager-openvpn
-networkmanager-wireguard
 openvpn
 wireguard-tools
 
