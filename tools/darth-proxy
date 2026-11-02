@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Darth Proxy: configure a user-supplied proxy for a dedicated Firefox profile."""
-import configparser
 import json
 import os
 import re
@@ -127,9 +126,11 @@ class ProxyApp(Gtk.Application):
         try:
             cfg = self.read_form()
             CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            os.chmod(CONFIG_DIR, 0o700)
             CONFIG_FILE.write_text(json.dumps(cfg), encoding="utf-8")
             os.chmod(CONFIG_FILE, 0o600)
             PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+            os.chmod(PROFILE_DIR, 0o700)
             host, port = cfg["host"], cfg["port"]
             if cfg["type"] == "socks5":
                 prefs = [
@@ -157,7 +158,7 @@ class ProxyApp(Gtk.Application):
             (PROFILE_DIR / "user.js").write_text("\n".join(prefs) + "\n", encoding="utf-8")
             os.chmod(PROFILE_DIR / "user.js", 0o600)
             subprocess.Popen(["firefox", "--no-remote", "--profile", str(PROFILE_DIR)])
-            self.status.set_text("Saved securely and launched a dedicated Firefox profile. Firefox may ask for proxy credentials.")
+            self.status.set_text("Saved locally with owner-only permissions and launched a dedicated Firefox profile. Firefox may ask for proxy credentials.")
         except (ValueError, OSError) as exc:
             self.status.set_text("Could not save or launch: " + str(exc))
 
