@@ -38,7 +38,7 @@ jobs:
             -w /src \
             archlinux:latest \
             bash -euo pipefail -c '
-              pacman -Syu --noconfirm archiso git
+              pacman -Syu --noconfirm archiso git python
               python -m py_compile tools/darth-watchtower tools/darth-driver-manager tools/darth-store tools/darth-sentinel tools/darth-recovery tools/darth-privacy
               for f in tools/darth-guardian tools/darth-lockdown tools/darth-redlab; do bash -n "$f"; done
               bash -n build.sh scripts/install-custom-tools.sh scripts/install-security-tools.sh
