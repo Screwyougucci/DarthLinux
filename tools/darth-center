@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""Darth Center: lightweight, read-only terminal status dashboard."""
+import os, shutil, subprocess, time
+from pathlib import Path
+
+def command(args):
+    try:
+        p=subprocess.run(args,text=True,capture_output=True,timeout=3,check=False)
+        return (p.stdout or p.stderr).strip()
+    except (OSError,subprocess.TimeoutExpired):
+        return "unavailable"
+
+def memory():
+    data={}
+    try:
+        for line in Path("/proc/meminfo").read_text().splitlines():
+            k,v=line.split(":",1); data[k]=int(v.strip().split()[0])
+        total=data.get("MemTotal",0); avail=data.get("MemAvailable",0)
+        return f"{(total-avail)/1024:.0f} MiB used / {total/1024:.0f} MiB total"
+    except Exception: return "unavailable"
+
+def cpu():
+    try:
+        vals=list(map(int,Path("/proc/stat").read_text().splitlines()[0].split()[1:]))
+        idle=vals[3]+(vals[4] if len(vals)>4 else 0); total=sum(vals)
+        time.sleep(.25)
+        vals2=list(map(int,Path("/proc/stat").read_text().splitlines()[0].split()[1:]))
+        idle2=vals2[3]+(vals2[4] if len(vals2)>4 else 0); total2=sum(vals2)
+        return f"{100*(1-(idle2-idle)/max(1,total2-total)):.1f}%"
+    except Exception: return "unavailable"
+
+def main():
+    while True:
+        os.system("clear")
+        print("\033[91m╔══════════════════════════════════════════════════════╗")
+        print("║                 DARTH LINUX // CENTER               ║")
+        print("╚══════════════════════════════════════════════════════╝\033[0m")
+        print(f" Host: {command(['hostname'])}    Kernel: {command(['uname','-r'])}")
+        print(f" CPU load: {command(['uptime'])}")
+        print(f" CPU activity: {cpu()}    Memory: {memory()}")
+        print(f" Root disk: {shutil.disk_usage('/').used//(1024**3)} GiB used / {shutil.disk_usage('/').total//(1024**3)} GiB")
+        print("\n--- DEFENSE STATUS ---")
+        print(f" Firewall (nftables): {command(['systemctl','is-active','nftables'])}")
+        print(f" ClamAV daemon:       {command(['systemctl','is-active','clamav-daemon'])}")
+        print(f" Signature updater:   {command(['systemctl','is-active','clamav-freshclam'])}")
+        db=Path('/var/lib/clamav')
+        newest=max([p.stat().st_mtime for p in db.glob('*.{cvd,cld}')],default=0) if db.exists() else 0
+        print(f" AV definitions:      {time.strftime('%Y-%m-%d %H:%M',time.localtime(newest)) if newest else 'not found / not initialized'}")
+        print(f" Rootkit checker:     {'installed' if shutil.which('rkhunter') else 'not installed'}")
+        print("\nRefresh: 3 seconds | Press Ctrl+C to exit")
+        time.sleep(3)
+
+if __name__=="__main__":
+    try: main()
+    except KeyboardInterrupt: print("\nDarth Center closed.")
