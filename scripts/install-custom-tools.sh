@@ -10,5 +10,6 @@ install -Dm755 "$ROOT/tools/darth-control-center" /usr/local/bin/darth-control-c
 install -Dm755 "$ROOT/tools/darth-proxy" /usr/local/bin/darth-proxy
 install -Dm755 "$ROOT/tools/darth-ai-manager" /usr/local/bin/darth-ai-manager
 install -Dm644 "$ROOT/packaging/darth-control-center.desktop" /usr/share/applications/darth-control-center.desktop
+install -Dm644 "$ROOT/packaging/darth-ai-manager.desktop" /usr/share/applications/darth-ai-manager.desktop
 echo "Installed: darth-audit, darth-scope-scan, darth-center, darth-av-scan, darth-control-center, darth-proxy, darth-ai-manager"
 echo "Launch Darth Control Center from the XFCE applications menu."
