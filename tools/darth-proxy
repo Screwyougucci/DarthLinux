@@ -175,6 +175,8 @@ class ProxyApp(Gtk.Application):
             raise ValueError("Port must be a number from 1 to 65535.")
         if (username and not password) or (password and not username):
             raise ValueError("Enter both username and password, or leave both blank.")
+        if any(ord(ch) < 32 or ord(ch) == 127 for ch in username + password):
+            raise ValueError("Username and password cannot contain control characters or line breaks.")
         if "{session}" in username and username.count("{session}") != 1:
             raise ValueError("Use the {session} placeholder at most once.")
         return {
