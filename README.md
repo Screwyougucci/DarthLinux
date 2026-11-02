@@ -11,7 +11,7 @@
 - Make full-disk encryption available during installation.
 - Ship sensible network-security defaults and useful defensive tools.
 - Keep the base system lean, transparent, and free of project-added telemetry.
-- Provide optional tools for authorized security testing and lab work.
+- Include a broad toolkit for authorized network, web, wireless, forensics, and reverse-engineering lab work.\n- Include original Darth utilities with conservative, scope-limited defaults.
 
 ## Visual identity
 Near-black graphite, crimson accents, and restrained tactical details. Artwork is original project branding, not affiliated with Lucasfilm, Disney, or Arch Linux.
@@ -39,7 +39,7 @@ The live image includes `archinstall`. Run it from the live session and select e
 ## Optional toolkit
 Run `sudo bash scripts/install-security-tools.sh` after installation to add the optional defensive / authorized lab tools. Review the script before running it.
 
-## Layout
+## Security toolkit\nThe live profile includes a starter set of network, web, wireless-audit, forensics, and reverse-engineering packages. See [docs/SECURITY-TOOLKIT.md](docs/SECURITY-TOOLKIT.md) for the custom utilities and responsible-use boundaries. The package list is experimental until an Archiso build validates every package name.\n\n## Layout
 - `build.sh` — Archiso build entry point
 - `profiles/darth/` — package selection and live-system overlay
 - `scripts/` — optional helpers
