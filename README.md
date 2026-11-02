@@ -41,7 +41,11 @@ The live image includes `archinstall`. Run it from the live session and select e
 ## Optional toolkit
 Run `sudo bash scripts/install-security-tools.sh` after installation to add the optional defensive / authorized lab tools. Review the script before running it.
 
-## Security toolkit\nThe live profile includes a starter set of network, web, wireless-audit, forensics, and reverse-engineering packages. See [docs/SECURITY-TOOLKIT.md](docs/SECURITY-TOOLKIT.md) for the custom utilities and responsible-use boundaries. The package list is experimental until an Archiso build validates every package name.\n\n## Virtual machines, network tools, and notepad
+## Security toolkit\nThe live profile includes a starter set of network, web, wireless-audit, forensics, and reverse-engineering packages. See [docs/SECURITY-TOOLKIT.md](docs/SECURITY-TOOLKIT.md) for the custom utilities and responsible-use boundaries. The package list is experimental until an Archiso build validates every package name.\n\n## Darth Control Center and VPN
+
+The original GTK4 **Darth Control Center** brings together VM management, VPN settings/status, network diagnostics, antivirus, system monitoring, and Mousepad. VPN support includes native NetworkManager WireGuard and OpenVPN via its NetworkManager plugin; no VPN subscription or provider is bundled. See [docs/CONTROL-CENTER-VPN.md](docs/CONTROL-CENTER-VPN.md).
+
+## Virtual machines, network tools, and notepad
 
 The desktop image includes QEMU/KVM with Virtual Machine Manager, network troubleshooting tools, and Mousepad. VM use requires hardware virtualization support and sufficient memory; see [docs/VM-NETWORK-NOTES.md](docs/VM-NETWORK-NOTES.md) for setup and safe network-isolation guidance.
 
