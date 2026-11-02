@@ -8,7 +8,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(
     description="Create or restore a tar backup. Restore extracts only into a new empty directory."
 )
-sub = parser.add_subparsers(dest="cmd", required=True)
+sub = parser.add_subparsers(dest="cmd")
 backup = sub.add_parser("backup")
 backup.add_argument("source")
 backup.add_argument("archive")
@@ -16,6 +16,21 @@ restore = sub.add_parser("restore")
 restore.add_argument("archive")
 restore.add_argument("destination")
 args = parser.parse_args()
+if args.cmd is None:
+    if not sys.stdin.isatty():
+        parser.print_help()
+        sys.exit(2)
+    choice = input("Choose backup or restore [backup/restore]: ").strip().lower()
+    if choice == "backup":
+        args.cmd = "backup"
+        args.source = input("Source file or folder: ").strip()
+        args.archive = input("Destination .tar.gz archive: ").strip()
+    elif choice == "restore":
+        args.cmd = "restore"
+        args.archive = input("Backup .tar.gz archive: ").strip()
+        args.destination = input("New or empty restore directory: ").strip()
+    else:
+        sys.exit("Choose backup or restore.")
 
 if args.cmd == "backup":
     source = Path(args.source).expanduser().resolve()
