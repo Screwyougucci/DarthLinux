@@ -18,6 +18,20 @@ trap 'rm -rf "$TMP_PROFILE"' EXIT
 cp -a "$BASE_PROFILE/." "$TMP_PROFILE/"
 cat "$PROFILE_DIR/packages.x86_64" >> "$TMP_PROFILE/packages.x86_64"
 cp -a "$PROFILE_DIR/airootfs/." "$TMP_PROFILE/airootfs/"
+
+# Bake the project's original command-line and GTK tools into the live image.
+BIN_DIR="$TMP_PROFILE/airootfs/usr/local/bin"
+APP_DIR="$TMP_PROFILE/airootfs/usr/share/applications"
+mkdir -p "$BIN_DIR" "$APP_DIR"
+for tool in darth-audit darth-scope-scan darth-center darth-av-scan \
+            darth-control-center darth-proxy darth-ai-manager darth-settings; do
+  [[ -f "$ROOT_DIR/tools/$tool" ]] || die "Missing custom tool: $tool"
+  install -Dm755 "$ROOT_DIR/tools/$tool" "$BIN_DIR/$tool"
+done
+for desktop in darth-control-center.desktop darth-ai-manager.desktop darth-settings.desktop; do
+  [[ -f "$ROOT_DIR/packaging/$desktop" ]] || die "Missing desktop entry: $desktop"
+  install -Dm644 "$ROOT_DIR/packaging/$desktop" "$APP_DIR/$desktop"
+done
 # Convert text placeholders into real systemd unit symlinks in the build tree.
 for unit in NetworkManager nftables; do
   link="$TMP_PROFILE/airootfs/etc/systemd/system/multi-user.target.wants/$unit.service"
