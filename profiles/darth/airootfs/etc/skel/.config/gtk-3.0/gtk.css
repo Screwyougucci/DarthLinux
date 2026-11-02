@@ -1,0 +1,12 @@
+/* Darth Linux — original graphite / crimson GTK accents */
+@define-color darth_bg #101114;
+@define-color darth_panel #191b20;
+@define-color darth_red #b5122b;
+@define-color darth_text #e8e8eb;
+window, dialog, .background { background-color: @darth_bg; color: @darth_text; }
+headerbar, .titlebar, toolbar { background-color: @darth_panel; color: @darth_text; }
+button { background-image: none; background-color: #252830; color: @darth_text; border: 1px solid #3b3e47; border-radius: 5px; }
+button:hover { background-color: #343842; }
+button:checked, button.suggested-action { background-color: @darth_red; color: #fff; }
+entry, textview, spinbutton, combobox { background-color: #17191e; color: @darth_text; border: 1px solid #41444d; }
+selection { background-color: @darth_red; color: #fff; }
