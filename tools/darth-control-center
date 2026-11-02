@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""Darth Control Center: lightweight GTK4 launcher and status panel."""
+import subprocess
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gtk, Gio, GLib
+
+def run(args):
+    try:
+        p = subprocess.run(args, text=True, capture_output=True, timeout=3, check=False)
+        return (p.stdout or p.stderr).strip() or "No details reported"
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return str(exc)
+
+class ControlCenter(Gtk.Application):
+    def __init__(self):
+        super().__init__(application_id="org.darthlinux.ControlCenter",
+                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+
+    def do_activate(self):
+        win = Gtk.ApplicationWindow(application=self)
+        win.set_title("Darth Linux // Control Center")
+        win.set_default_size(760, 600)
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        root.set_margin_top(22); root.set_margin_bottom(22)
+        root.set_margin_start(24); root.set_margin_end(24)
+        win.set_child(root)
+
+        title = Gtk.Label(label="DARTH LINUX  //  CONTROL CENTER")
+        title.add_css_class("title-1")
+        title.set_halign(Gtk.Align.START)
+        root.append(title)
+        subtitle = Gtk.Label(label="SYSTEM  •  VIRTUALIZATION  •  NETWORK  •  DEFENSE")
+        subtitle.add_css_class("dim-label")
+        subtitle.set_halign(Gtk.Align.START)
+        root.append(subtitle)
+
+        status = Gtk.Label()
+        status.set_xalign(0)
+        status.set_selectable(True)
+        status.add_css_class("card")
+        root.append(status)
+
+        def refresh(*_):
+            active = run(["nmcli", "-t", "-f", "NAME,TYPE,DEVICE", "connection", "show", "--active"])
+            vpn_lines = [line for line in active.splitlines() if "vpn" in line.lower() or "wireguard" in line.lower()]
+            vpn = "\n".join(vpn_lines) if vpn_lines else "No VPN connection currently active"
+            firewall = run(["systemctl", "is-active", "nftables"])
+            status.set_text("NETWORK / VPN STATUS\n" + vpn + "\n\nFirewall (nftables): " + firewall)
+        refresh()
+
+        grid = Gtk.Grid(column_spacing=10, row_spacing=10)
+        root.append(grid)
+
+        def launch(label, command, description, col, row):
+            button = Gtk.Button()
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+            name = Gtk.Label(label=label); name.add_css_class("heading")
+            detail = Gtk.Label(label=description); detail.add_css_class("dim-label")
+            box.append(name); box.append(detail)
+            button.set_child(box)
+            button.set_hexpand(True); button.set_vexpand(True)
+            button.set_size_request(220, 78)
+            button.connect("clicked", lambda *_: self.open_app(command))
+            grid.attach(button, col, row, 1, 1)
+
+        launch("Virtual Machines", ["virt-manager"], "Create and manage QEMU/KVM guests", 0, 0)
+        launch("VPN Connections", ["nm-connection-editor"], "Import and manage OpenVPN / WireGuard", 1, 0)
+        launch("Network Monitor", ["xfce4-terminal", "--command", "btop"], "CPU, memory, processes and network", 0, 1)
+        launch("Network Diagnostics", ["xfce4-terminal", "--command", "bash -lc 'ip -brief address; echo; ip route; exec bash'"], "Inspect local interfaces and routes", 1, 1)
+        launch("Notepad", ["mousepad"], "Write notes and edit text files", 0, 2)
+        launch("Antivirus", ["clamui"], "Open the ClamAV graphical scanner", 1, 2)
+        launch("Security Dashboard", ["xfce4-terminal", "--command", "darth-center"], "Firewall, system and AV status", 0, 3)
+        launch("Authorized Scope Scan", ["xfce4-terminal", "--command", "darth-scope-scan"], "Private lab range only; asks for scope", 1, 3)
+
+        refresh_button = Gtk.Button(label="Refresh VPN / firewall status")
+        refresh_button.connect("clicked", refresh)
+        root.append(refresh_button)
+
+        note = Gtk.Label(label="VPN providers are not included. Import a configuration from a VPN provider you trust. A connected VPN is not a complete anonymity or security guarantee.")
+        note.set_wrap(True); note.set_xalign(0); note.add_css_class("dim-label")
+        root.append(note)
+        win.present()
+
+    def open_app(self, command):
+        try:
+            subprocess.Popen(command)
+        except OSError as exc:
+            dialog = Gtk.AlertDialog()
+            dialog.set_message("Could not launch application")
+            dialog.set_detail(str(exc))
+            dialog.show(self.get_active_window())
+
+app = ControlCenter()
+app.run(None)
