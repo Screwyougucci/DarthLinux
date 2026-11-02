@@ -64,3 +64,6 @@ No boot test, hardware compatibility test, installer test, or encryption verific
 ## License
 Unless otherwise noted, project source and original artwork are offered under the MIT License. Third-party components retain their own licenses.
 \n## Residential proxy setup\n\nThe Control Center includes **Darth Proxy**, a utility for saving multiple provider-supplied HTTP or SOCKS5 residential proxy profiles, switching between them, testing connectivity, and starting a fresh provider session when the provider documents a session-ID username format. It launches dedicated Firefox profiles and does not route all system traffic. Read [docs/DARTH-PROXY.md](docs/DARTH-PROXY.md) for setup, privacy notes, and limitations.\n
+## Local AI Model Manager
+
+Darth Linux includes **Darth AI Model Manager**, a GTK desktop utility for downloading GGUF models from Hugging Face and running them locally with llama.cpp. It supports CPU inference, local model storage, a loopback-only chat UI, and stop/start controls. See [docs/DARTH-AI-MANAGER.md](docs/DARTH-AI-MANAGER.md) for model selection, hardware guidance, and security notes.
