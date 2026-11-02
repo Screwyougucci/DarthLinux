@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""Darth Driver Manager: local hardware inventory and conservative guidance."""
+import subprocess,shutil
+import gi
+gi.require_version("Gtk","4.0")
+from gi.repository import Gtk,Gio
+def run(args):
+ try:
+  p=subprocess.run(args,text=True,capture_output=True,timeout=8);return (p.stdout or p.stderr).strip() or "(no output)"
+ except Exception as e:return f"Unavailable: {e}"
+class App(Gtk.Application):
+ def __init__(self):super().__init__(application_id="org.darthlinux.DriverManager",flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+ def do_activate(self):
+  w=Gtk.ApplicationWindow(application=self);w.set_title("DARTH // DRIVER MANAGER");w.set_default_size(850,650)
+  box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=10);box.set_margin_top(18);box.set_margin_bottom(18);box.set_margin_start(20);box.set_margin_end(20);w.set_child(box)
+  h=Gtk.Label(label="DARTH DRIVER MANAGER");h.add_css_class("title-1");h.set_xalign(0);box.append(h)
+  msg=Gtk.Label(label="Hardware inventory and diagnostics. This tool does not silently install drivers.");msg.set_xalign(0);box.append(msg)
+  view=Gtk.TextView();view.set_editable(False);view.set_monospace(True);view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+  scroll=Gtk.ScrolledWindow();scroll.set_vexpand(True);scroll.set_child(view);box.append(scroll)
+  def refresh(*_):
+   parts=[]
+   for title,args in [("PCI DEVICES",["lspci","-nnk"]),("USB DEVICES",["lsusb"]),("NETWORK",["ip","-brief","link"]),("GRAPHICS",["sh","-c","ls -l /dev/dri 2>/dev/null || true"]),("FIRMWARE ERRORS",["sh","-c","journalctl -k -b --no-pager 2>/dev/null | grep -iE 'firmware.*(fail|missing)|failed to load firmware' | tail -40 || true"]),("BLOCK DEVICES",["lsblk","-o","NAME,TYPE,FSTYPE,SIZE,MODEL"])]:
+    parts.append("\n===== "+title+" =====\n"+run(args))
+   view.get_buffer().set_text("\n".join(parts))
+  b=Gtk.Button(label="Refresh hardware inventory");b.connect("clicked",refresh);box.append(b)
+  g=Gtk.Label(label="Guidance: Intel/AMD graphics usually use in-kernel drivers plus Mesa. NVIDIA choices depend on exact GPU and kernel. Install only signed packages from configured Arch repositories. Confirm hardware model and read package changes first.");g.set_wrap(True);g.set_xalign(0);box.append(g)
+  refresh();w.present()
+App().run(None)

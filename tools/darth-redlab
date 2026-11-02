@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+echo "DARTH RED LAB // AUTHORIZED TESTING"
+echo "Use only isolated VMs and targets you own or have explicit permission to assess."
+echo
+echo "Installed lab tools:"
+for x in nmap tcpdump wireshark gobuster nikto sqlmap aircrack-ng radare2 gdb; do
+ command -v "$x" >/dev/null 2>&1 && printf '  [OK] %s\n' "$x" || printf '  [--] %s not installed\n' "$x"
+done
+echo
+echo "Virtualization status:"
+if command -v virt-host-validate >/dev/null 2>&1; then virt-host-validate qemu || true
+else echo "Install QEMU/KVM validation tools to check virtualization support."
+fi
+echo
+echo "For scoped private IPv4 host discovery, run: darth-scope-scan 192.168.56.0/24"

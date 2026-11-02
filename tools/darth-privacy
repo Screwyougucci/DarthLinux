@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+"""Darth Privacy: inspect common local privacy surfaces without changing settings."""
+import subprocess
+def run(args):
+ try:
+  p=subprocess.run(args,text=True,capture_output=True,timeout=4);return (p.stdout or p.stderr).strip() or "unavailable"
+ except Exception:return "unavailable"
+print("DARTH PRIVACY // LOCAL STATUS")
+print("\nListening network sockets:\n"+run(["ss","-tuln"]))
+print("\nActive network connections:\n"+run(["nmcli","-t","-f","NAME,TYPE,DEVICE","connection","show","--active"]))
+print("\nEnabled services (review for services you do not need):\n"+run(["systemctl","list-unit-files","--state=enabled","--no-pager"]))
+print("\nNo settings were changed. Review before disabling services; some are required for networking, login, updates, or hardware.")

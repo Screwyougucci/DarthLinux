@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""Darth Watchtower: lightweight local system and security dashboard."""
+import csv, os, shutil, subprocess, time
+from pathlib import Path
+import gi
+gi.require_version("Gtk","4.0")
+from gi.repository import Gtk, GLib, Gio, Gdk
+
+THEMES={
+ "Darth Red":("#111014","#ed3448","#24202a"),
+ "Cyberpunk":("#101020","#55e8ff","#29213b"),
+ "Matrix":("#07130b","#48e879","#102719"),
+ "Ghost":("#101820","#8ccfff","#202d38"),
+ "Command":("#111318","#e5e7eb","#252a33")}
+def read_cpu():
+ try:
+  v=list(map(int,Path("/proc/stat").read_text().splitlines()[0].split()[1:]))
+  return sum(v),v[3]+(v[4] if len(v)>4 else 0)
+ except Exception:return (0,0)
+def metrics():
+ mem={}
+ try:
+  for l in Path("/proc/meminfo").read_text().splitlines():
+   k,v=l.split(":",1);mem[k]=int(v.split()[0])
+ except Exception:pass
+ total=mem.get("MemTotal",0);avail=mem.get("MemAvailable",0)
+ du=shutil.disk_usage("/")
+ cpu=0
+ try:
+  a,b=read_cpu();time.sleep(.08);c,d=read_cpu();cpu=100*(1-(d-b)/max(1,c-a))
+ except Exception:pass
+ rx=tx=0
+ try:
+  for line in Path("/proc/net/dev").read_text().splitlines()[2:]:
+   name,vals=line.split(":");v=list(map(int,vals.split()))
+   if name.strip()!="lo":rx+=v[0];tx+=v[8]
+ except Exception:pass
+ return {"CPU":f"{cpu:.1f}%","Memory":f"{(total-avail)/1024:.0f} / {total/1024:.0f} MiB","Disk":f"{du.used/du.total*100:.1f}% used ({du.free//(1024**3)} GiB free)","Network":f"RX {rx/1048576:.1f} MiB · TX {tx/1048576:.1f} MiB","Firewall":cmd(["systemctl","is-active","nftables"]),"ClamAV":cmd(["systemctl","is-active","clamav-daemon"]),"Kernel":cmd(["uname","-r"])}
+def cmd(args):
+ try:
+  p=subprocess.run(args,text=True,capture_output=True,timeout=2);return (p.stdout or p.stderr).strip() or "not reported"
+ except Exception:return "unavailable"
+class App(Gtk.Application):
+ def __init__(self):super().__init__(application_id="org.darthlinux.Watchtower",flags=Gio.ApplicationFlags.DEFAULT_FLAGS);self.values={}
+ def do_activate(self):
+  w=Gtk.ApplicationWindow(application=self);w.set_title("DARTH // WATCHTOWER");w.set_default_size(900,650);self.win=w
+  root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=12);root.set_margin_top(20);root.set_margin_bottom(20);root.set_margin_start(22);root.set_margin_end(22);w.set_child(root)
+  top=Gtk.Box(spacing=10);root.append(top)
+  title=Gtk.Label(label="DARTH WATCHTOWER  //  SYSTEM INTELLIGENCE");title.set_xalign(0);title.set_hexpand(True);title.add_css_class("title-1");top.append(title)
+  self.theme=Gtk.DropDown.new_from_strings(list(THEMES));top.append(self.theme);self.theme.connect("notify::selected",lambda *_:self.style())
+  self.grid=Gtk.Grid(column_spacing=12,row_spacing=12);self.grid.set_hexpand(True);self.grid.set_vexpand(True);root.append(self.grid)
+  self.labels={}
+  for i,k in enumerate(["CPU","Memory","Disk","Network","Firewall","ClamAV","Kernel"]):
+   frame=Gtk.Frame(label=k);box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8);box.set_margin_top(14);box.set_margin_bottom(14);box.set_margin_start(14);box.set_margin_end(14)
+   val=Gtk.Label(label="Collecting…");val.set_wrap(True);val.set_xalign(0);box.append(val);frame.set_child(box);self.grid.attach(frame,i%2,i//2,1,1);self.labels[k]=val
+  actions=Gtk.Box(spacing=8);root.append(actions)
+  b=Gtk.Button(label="Refresh now");b.connect("clicked",lambda *_:self.refresh());actions.append(b)
+  b=Gtk.Button(label="Export CSV report");b.connect("clicked",lambda *_:self.export());actions.append(b)
+  note=Gtk.Label(label="Local-only telemetry · values are read from this machine · no data is uploaded");note.set_xalign(0);root.append(note)
+  self.style();self.refresh();GLib.timeout_add_seconds(3,self.refresh);w.present()
+ def style(self):
+  bg,accent,panel=list(THEMES.values())[self.theme.get_selected()]
+  css=Gtk.CssProvider();css.load_from_data(f"window {{background:{bg};color:#eee}} label {{color:#eee}} .title-1 {{color:{accent};font-weight:800}} frame {{background:{panel};border:1px solid {accent};border-radius:10px;padding:8px}} button {{padding:8px}}".encode())
+  Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),css,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+ def refresh(self):
+  self.values=metrics()
+  for k,v in self.values.items():self.labels[k].set_text(v)
+  return True
+ def export(self):
+  path=Path.home()/("darth-watchtower-"+time.strftime("%Y%m%d-%H%M%S")+".csv")
+  with path.open("w",newline="") as f:
+   wr=csv.writer(f);wr.writerow(["metric","value","captured_local"]);[wr.writerow([k,v,time.strftime("%Y-%m-%d %H:%M:%S")]) for k,v in self.values.items()]
+  d=Gtk.AlertDialog();d.set_message("Report exported");d.set_detail(f"{path}\nReview before sharing: reports may reveal host and security state.");d.show(self.win)
+App().run(None)

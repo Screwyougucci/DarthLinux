@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+usage(){ echo "Darth Guardian — nftables firewall status"; echo "Usage: darth-guardian [status|enable|disable|rules]"; }
+action="${1:-status}"
+case "$action" in
+ status) systemctl is-active nftables || true; nft list ruleset 2>/dev/null || echo "No readable nftables ruleset.";;
+ rules) nft list ruleset;;
+ enable|disable)
+  [[ $EUID -eq 0 ]] || { echo "Run with sudo." >&2; exit 1; }
+  echo "This changes the system firewall service."
+  read -r -p "Type ENABLE FIREWALL or DISABLE FIREWALL: " confirm
+  [[ "$confirm" == "ENABLE FIREWALL" && "$action" == enable ]] && systemctl enable --now nftables
+  [[ "$confirm" == "DISABLE FIREWALL" && "$action" == disable ]] && systemctl disable --now nftables
+  ;;
+ *) usage; exit 2;;
+esac

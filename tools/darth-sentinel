@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+"""Darth Sentinel: on-demand ClamAV scan with opt-in, reversible quarantine."""
+import argparse,hashlib,json,os,subprocess,sys,time
+from pathlib import Path
+p=argparse.ArgumentParser(description="Scan files with ClamAV; detections are never silently deleted.")
+p.add_argument("target");p.add_argument("--quarantine",action="store_true",help="Move confirmed detections to a private quarantine after asking.")
+a=p.parse_args();target=Path(a.target).expanduser().resolve()
+if not target.exists():sys.exit("Target does not exist.")
+if not shutil_which:=__import__("shutil").which("clamscan"):sys.exit("ClamAV is not installed.")
+proc=subprocess.run([shutil_which,"--infected","--recursive","--no-summary",str(target)],text=True,capture_output=True)
+detections=[]
+for line in proc.stdout.splitlines():
+ if line.rstrip().endswith(" FOUND"):
+  name,_,sig=line.partition(": ");detections.append((name,sig.removesuffix(" FOUND")))
+print(proc.stdout or proc.stderr)
+if proc.returncode not in (0,1):sys.exit(f"ClamAV failed with exit code {proc.returncode}.")
+if not detections:print("No detections reported.");sys.exit(0)
+print(f"{len(detections)} detection(s). Files will not be deleted.")
+if not a.quarantine:print("Review results. Re-run with --quarantine to move detections after confirmation.");sys.exit(1)
+if input("Type QUARANTINE FILES to move detections: ").strip()!="QUARANTINE FILES":sys.exit("Cancelled.")
+q=Path.home()/".local/share/darth/quarantine";q.mkdir(parents=True,exist_ok=True,mode=0o700);os.chmod(q,0o700)
+manifest=q/"manifest.jsonl"
+for raw,sig in detections:
+ src=Path(raw)
+ try:
+  if src.is_symlink() or not src.is_file():print(f"Skipped unsafe/non-file path: {src}");continue
+  digest=hashlib.sha256(src.read_bytes()).hexdigest()
+  dest=q/(digest+"-"+src.name)
+  os.replace(src,dest)
+  record={"original":str(src),"quarantined":str(dest),"signature":sig,"sha256":digest,"time":time.time()}
+  with manifest.open("a") as f:f.write(json.dumps(record)+"\n")
+  print(f"Quarantined: {src} -> {dest}")
+ except OSError as e:print(f"Could not quarantine {src}: {e}")
+print(f"Quarantine manifest: {manifest}")

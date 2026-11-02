@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""Darth Store: minimal GUI for official configured pacman repositories."""
+import subprocess
+import gi
+gi.require_version("Gtk","4.0")
+from gi.repository import Gtk,Gio
+class App(Gtk.Application):
+ def __init__(self):super().__init__(application_id="org.darthlinux.Store",flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+ def do_activate(self):
+  w=Gtk.ApplicationWindow(application=self);w.set_title("DARTH // STORE");w.set_default_size(760,580)
+  root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=10);root.set_margin_top(18);root.set_margin_bottom(18);root.set_margin_start(20);root.set_margin_end(20);w.set_child(root)
+  h=Gtk.Label(label="DARTH STORE");h.add_css_class("title-1");h.set_xalign(0);root.append(h)
+  root.append(Gtk.Label(label="Searches and installs from your configured pacman repositories only. No community scripts or silent installs."))
+  entry=Gtk.Entry();entry.set_placeholder_text("Package name (letters, numbers, . _ + -)");root.append(entry)
+  output=Gtk.TextView();output.set_editable(False);output.set_monospace(True);scroll=Gtk.ScrolledWindow();scroll.set_vexpand(True);scroll.set_child(output);root.append(scroll)
+  def show(s):output.get_buffer().set_text(s)
+  def valid():
+   s=entry.get_text().strip()
+   return s if s and all(c.isalnum() or c in "._+-" for c in s) else None
+  def search(*_):
+   s=valid()
+   if not s:show("Enter a valid package name.");return
+   p=subprocess.run(["pacman","-Ss",s],text=True,capture_output=True);show(p.stdout or p.stderr or "No matches.")
+  def install(*_):
+   s=valid()
+   if not s:show("Enter a valid package name.");return
+   d=Gtk.MessageDialog(transient_for=w,modal=True,message_type=Gtk.MessageType.WARNING,buttons=Gtk.ButtonsType.YES_NO,text=f"Install {s}?")
+   d.set_secondary_text("This opens the system package manager with administrator authentication. Review every package and dependency before confirming.")
+   def answer(dialog,response):
+    dialog.destroy()
+    if response==Gtk.ResponseType.YES:
+     try:subprocess.Popen(["pkexec","pacman","-S","--needed","--",s])
+     except OSError as e:show(str(e))
+   d.connect("response",answer);d.present()
+  row=Gtk.Box(spacing=8);root.append(row)
+  b=Gtk.Button(label="Search");b.connect("clicked",search);row.append(b)
+  b=Gtk.Button(label="Install selected package…");b.connect("clicked",install);row.append(b)
+  b=Gtk.Button(label="Installed packages");b.connect("clicked",lambda *_:show(subprocess.run(["pacman","-Q"],text=True,capture_output=True).stdout));row.append(b)
+  w.present()
+App().run(None)

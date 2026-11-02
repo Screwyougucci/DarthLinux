@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+echo "DARTH LOCKDOWN // SAFE SESSION LOCK"
+echo "This helper locks the current desktop session; it does not claim to harden the whole OS."
+if command -v xflock4 >/dev/null; then exec xflock4; fi
+if command -v loginctl >/dev/null; then exec loginctl lock-session; fi
+echo "No supported session-lock command found."; exit 1
