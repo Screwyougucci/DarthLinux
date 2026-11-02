@@ -5,7 +5,7 @@ import subprocess
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, Gio, GLib
+from gi.repository import Gtk, Gio, GLib, Gdk
 
 def command(args, timeout=4):
     try:
@@ -39,7 +39,7 @@ class DarthSettings(Gtk.Application):
           .darth .panel { background: #191c24; border: 1px solid #44404a;
             border-radius: 10px; padding: 14px; }
         """)
-        display = Gtk.Widget.get_display(Gtk.ApplicationWindow())
+        display = Gdk.Display.get_default()
         if display:
             Gtk.StyleContext.add_provider_for_display(display, css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
