@@ -1,35 +1,100 @@
 #!/usr/bin/env python3
 """Darth Sentinel: on-demand ClamAV scan with opt-in, reversible quarantine."""
-import argparse,hashlib,json,os,subprocess,sys,time
+import argparse
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
 from pathlib import Path
-p=argparse.ArgumentParser(description="Scan files with ClamAV; detections are never silently deleted.")
-p.add_argument("target");p.add_argument("--quarantine",action="store_true",help="Move confirmed detections to a private quarantine after asking.")
-a=p.parse_args();target=Path(a.target).expanduser().resolve()
-if not target.exists():sys.exit("Target does not exist.")
-shutil_which=__import__("shutil").which("clamscan")
-if not shutil_which:sys.exit("ClamAV is not installed.")
-proc=subprocess.run([shutil_which,"--infected","--recursive","--no-summary",str(target)],text=True,capture_output=True)
-detections=[]
+
+parser = argparse.ArgumentParser(
+    description="Scan files with ClamAV; detections are never silently deleted."
+)
+parser.add_argument("target", help="File or directory to scan")
+parser.add_argument(
+    "--quarantine", action="store_true",
+    help="Move confirmed detections to a private quarantine after asking",
+)
+args = parser.parse_args()
+target = Path(args.target).expanduser().resolve()
+if not target.exists():
+    sys.exit("Target does not exist.")
+
+clamscan = shutil.which("clamscan")
+if not clamscan:
+    sys.exit("ClamAV is not installed.")
+
+try:
+    proc = subprocess.run(
+        [clamscan, "--infected", "--recursive", "--no-summary", "--", str(target)],
+        text=True, capture_output=True, check=False, timeout=3600,
+    )
+except subprocess.TimeoutExpired:
+    sys.exit("ClamAV scan timed out after one hour.")
+
+detections = []
 for line in proc.stdout.splitlines():
- if line.rstrip().endswith(" FOUND"):
-  name,_,sig=line.partition(": ");detections.append((name,sig.removesuffix(" FOUND")))
+    if line.rstrip().endswith(" FOUND"):
+        name, separator, signature = line.partition(": ")
+        if separator:
+            detections.append((name, signature.removesuffix(" FOUND")))
+
 print(proc.stdout or proc.stderr)
-if proc.returncode not in (0,1):sys.exit(f"ClamAV failed with exit code {proc.returncode}.")
-if not detections:print("No detections reported.");sys.exit(0)
+if proc.returncode not in (0, 1):
+    sys.exit(f"ClamAV failed with exit code {proc.returncode}.")
+if not detections:
+    print("No detections reported.")
+    sys.exit(0)
+
 print(f"{len(detections)} detection(s). Files will not be deleted.")
-if not a.quarantine:print("Review results. Re-run with --quarantine to move detections after confirmation.");sys.exit(1)
-if input("Type QUARANTINE FILES to move detections: ").strip()!="QUARANTINE FILES":sys.exit("Cancelled.")
-q=Path.home()/".local/share/darth/quarantine";q.mkdir(parents=True,exist_ok=True,mode=0o700);os.chmod(q,0o700)
-manifest=q/"manifest.jsonl"
-for raw,sig in detections:
- src=Path(raw)
- try:
-  if src.is_symlink() or not src.is_file():print(f"Skipped unsafe/non-file path: {src}");continue
-  digest=hashlib.sha256(src.read_bytes()).hexdigest()
-  dest=q/(digest+"-"+src.name)
-  os.replace(src,dest)
-  record={"original":str(src),"quarantined":str(dest),"signature":sig,"sha256":digest,"time":time.time()}
-  with manifest.open("a") as f:f.write(json.dumps(record)+"\n")
-  print(f"Quarantined: {src} -> {dest}")
- except OSError as e:print(f"Could not quarantine {src}: {e}")
+if not args.quarantine:
+    print("Review results. Re-run with --quarantine to move detections after confirmation.")
+    sys.exit(1)
+if input("Type QUARANTINE FILES to move detections: ").strip() != "QUARANTINE FILES":
+    sys.exit("Cancelled.")
+
+quarantine = Path.home() / ".local/share/darth/quarantine"
+quarantine.mkdir(parents=True, exist_ok=True, mode=0o700)
+os.chmod(quarantine, 0o700)
+manifest = quarantine / "manifest.jsonl"
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+for raw_path, signature in detections:
+    source = Path(raw_path)
+    try:
+        # Do not follow symlinks or move directories based on scanner output.
+        if source.is_symlink() or not source.is_file():
+            print(f"Skipped unsafe/non-file path: {source}")
+            continue
+        digest = sha256_file(source)
+        destination = quarantine / f"{digest}-{source.name}"
+        if destination.exists():
+            destination = quarantine / f"{digest}-{time.time_ns()}-{source.name}"
+        shutil.move(str(source), str(destination))
+        record = {
+            "original": str(source),
+            "quarantined": str(destination),
+            "signature": signature,
+            "sha256": digest,
+            "time": time.time(),
+        }
+        fd = os.open(manifest, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+        with os.fdopen(fd, "a", encoding="utf-8") as stream:
+            stream.write(json.dumps(record) + "\n")
+        os.chmod(manifest, 0o600)
+        print(f"Quarantined: {source} -> {destination}")
+    except OSError as exc:
+        print(f"Could not quarantine {source}: {exc}")
+
 print(f"Quarantine manifest: {manifest}")
