@@ -169,8 +169,8 @@ class DarthSettings(Gtk.Application):
         security = page("Security")
         s = section(security, "DEFENSE AND FIREWALL", "Review local security status and run on-demand scans.")
         action(s, "Open security dashboard", ["xfce4-terminal", "--command", "darth-center"])
-        action(s, "Run antivirus scanner", ["xfce4-terminal", "--command", "darth-av-scan"])
-        action(s, "Open authorized lab scanner", ["xfce4-terminal", "--command", "darth-scope-scan"])
+        action(s, "Run antivirus scanner", ["xfce4-terminal", "--hold", "--command", "darth-av-scan"])
+        action(s, "Open authorized lab scanner", ["xfce4-terminal", "--hold", "--command", "darth-scope-scan"])
         action(s, "Firewall status", ["xfce4-terminal", "--command", "bash -lc 'systemctl status nftables --no-pager; exec bash'"])
 
         # System and AI
