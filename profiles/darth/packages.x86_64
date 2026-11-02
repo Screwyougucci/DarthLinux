@@ -71,6 +71,16 @@ libvirt
 dnsmasq
 edk2-ovmf
 
+# Darth graphical control center
+gtk4
+python-gobject
+
+# VPN support through NetworkManager
+networkmanager-openvpn
+networkmanager-wireguard
+openvpn
+wireguard-tools
+
 # Lightweight graphical text editor
 mousepad
 
