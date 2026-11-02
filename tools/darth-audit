@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+"""Darth Audit: read-only local security posture snapshot."""
+import shutil, subprocess
+from pathlib import Path
+
+def run(args):
+    try:
+        p=subprocess.run(args,text=True,capture_output=True,timeout=5,check=False)
+        return (p.stdout or p.stderr).strip()
+    except (OSError,subprocess.TimeoutExpired):
+        return ""
+def show(label,value):
+    print(f"[{label}] {value or 'unknown / unavailable'}")
+release=Path("/etc/os-release")
+show("OS",release.read_text(errors="replace").splitlines()[0] if release.exists() else "")
+show("Kernel",run(["uname","-r"]))
+show("Firewall",run(["systemctl","is-active","nftables"]))
+show("Network manager",run(["systemctl","is-active","NetworkManager"]))
+show("Block devices / encryption",run(["lsblk","-o","NAME,TYPE,FSTYPE,MOUNTPOINTS"]))
+show("Listening sockets",run(["ss","-tuln"]))
+show("SSH server",run(["sshd","-T"]) if shutil.which("sshd") else "OpenSSH server not installed")
+print("\nRead-only snapshot only; not a penetration test or security guarantee.")
