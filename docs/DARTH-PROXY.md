@@ -15,7 +15,7 @@ The utility supports one endpoint at a time. Provider-specific rotating-session 
 
 ## Storage and privacy
 
-Settings are saved to `~/.config/darth-linux/proxy.json` with owner-only permissions (0600). The dedicated Firefox profile is `~/.mozilla/darth-proxy-profile`. Do not share your account credentials or commit local proxy configuration to Git. Firefox may prompt for proxy authentication when it first connects.
+Settings are saved to `~/.config/darth-linux/proxy.json` with owner-only permissions (0600). The dedicated Firefox profile is `~/.mozilla/darth-proxy-profile`. Do not share your account credentials or commit local proxy configuration to Git. Firefox may prompt for HTTP proxy authentication when it first connects. Native Firefox SOCKS5 support may not handle a provider’s username/password authentication; for SOCKS5, use provider IP allowlisting if offered, or choose the provider’s HTTP proxy endpoint when available.
 
 The test makes a request to `https://api.ipify.org` through the configured proxy. Do not run it if you do not want that endpoint to receive the request.
 
