@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""Darth Linux hardware compatibility report (read-only, standard library only)."""
+import argparse
+import json
+import os
+import platform
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+
+def command(args, timeout=8):
+    if not shutil.which(args[0]):
+        return ""
+    try:
+        result = subprocess.run(args, text=True, capture_output=True, timeout=timeout, check=False)
+        return (result.stdout or result.stderr).strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+def read_text(path):
+    try:
+        return Path(path).read_text(errors="replace").strip()
+    except OSError:
+        return ""
+
+
+def memory_gib():
+    for line in read_text("/proc/meminfo").splitlines():
+        if line.startswith("MemTotal:"):
+            try:
+                return round(int(line.split()[1]) / 1048576, 2)
+            except (ValueError, IndexError):
+                pass
+    return None
+
+
+def collect_report():
+    mem = memory_gib()
+    pci = command(["lspci", "-nnk"])
+    usb = command(["lsusb"])
+    kernel_log = command(["journalctl", "-k", "-b", "--no-pager", "-p", "err"], timeout=12)
+    firmware_errors = [
+        line for line in kernel_log.splitlines()
+        if any(term in line.lower() for term in ("firmware", "failed to load", "no suitable"))
+    ][:30]
+    cpuinfo = read_text("/proc/cpuinfo")
+    flags = set()
+    for line in cpuinfo.splitlines():
+        if line.lower().startswith(("flags", "features")) and ":" in line:
+            flags.update(line.split(":", 1)[1].split())
+            break
+
+    checks = []
+    arch = platform.machine()
+    checks.append({
+        "name": "CPU architecture",
+        "status": "ok" if arch in ("x86_64", "amd64") else "review",
+        "detail": arch or "Unknown",
+    })
+    checks.append({
+        "name": "Memory",
+        "status": "ok" if mem is not None and mem >= 4 else ("review" if mem is not None else "unknown"),
+        "detail": f"{mem} GiB detected" if mem is not None else "Could not read memory information; 4 GiB is a practical target, not a hard installer limit",
+    })
+    checks.append({
+        "name": "Boot mode",
+        "status": "ok" if Path("/sys/firmware/efi").exists() else "review",
+        "detail": "UEFI session detected" if Path("/sys/firmware/efi").exists() else "UEFI not detected (could be legacy BIOS or a restricted VM)",
+    })
+    checks.append({
+        "name": "Virtualization",
+        "status": "ok" if flags.intersection({"vmx", "svm"}) else "info",
+        "detail": "CPU virtualization flag detected" if flags.intersection({"vmx", "svm"}) else "No VMX/SVM flag found or CPU flags unavailable",
+    })
+    checks.append({
+        "name": "PCI inventory",
+        "status": "ok" if pci else "unknown",
+        "detail": f"{len(pci.splitlines())} device/driver lines" if pci else "lspci unavailable or no output; install pciutils for full detail",
+    })
+    checks.append({
+        "name": "USB inventory",
+        "status": "ok" if usb else "unknown",
+        "detail": f"{len(usb.splitlines())} device lines" if usb else "lsusb unavailable or no output; install usbutils for full detail",
+    })
+    checks.append({
+        "name": "Firmware errors",
+        "status": "review" if firmware_errors else ("ok" if kernel_log else "unknown"),
+        "detail": f"{len(firmware_errors)} possible firmware/driver errors in current-boot kernel error log" if kernel_log else "Kernel journal unavailable; review manually",
+    })
+
+    review_count = sum(item["status"] == "review" for item in checks)
+    unknown_count = sum(item["status"] == "unknown" for item in checks)
+    overall = "needs-review" if review_count else ("incomplete-data" if unknown_count else "no-obvious-blockers")
+    return {
+        "product": "Darth Linux Hardware Check",
+        "report_version": 1,
+        "warning": "This is a diagnostic snapshot, not a guarantee of compatibility. Physical boot, Wi-Fi, graphics, audio, suspend, installation, and encryption must be tested on the exact machine.",
+        "system": {
+            "architecture": arch,
+            "kernel": platform.release(),
+            "distribution": read_text("/etc/os-release").splitlines()[0:3],
+            "memory_gib": mem,
+            "boot_mode": "UEFI" if Path("/sys/firmware/efi").exists() else "legacy-or-unknown",
+        },
+        "summary": overall,
+        "checks": checks,
+        "devices": {"pci_lspci_nnk": pci, "usb_lsusb": usb},
+        "possible_firmware_errors": firmware_errors,
+    }
+
+
+def self_test():
+    assert isinstance(memory_gib(), (int, float, type(None)))
+    report = collect_report()
+    assert report["product"] == "Darth Linux Hardware Check"
+    assert report["summary"] in {"needs-review", "incomplete-data", "no-obvious-blockers"}
+    assert len(report["checks"]) >= 6
+    assert all(item["status"] in {"ok", "review", "unknown", "info"} for item in report["checks"])
+    print("darth-hwcheck self-test: PASS")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Create a read-only hardware compatibility report.")
+    parser.add_argument("--json", action="store_true", help="write the full report as JSON")
+    parser.add_argument("--self-test", action="store_true", help="run a local smoke test")
+    args = parser.parse_args()
+    if args.self_test:
+        self_test()
+        return 0
+    report = collect_report()
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print("DARTH LINUX // HARDWARE CHECK")
+        print("=" * 38)
+        print("Summary:", report["summary"])
+        print("System:", report["system"]["architecture"], "|", report["system"]["kernel"])
+        print("Memory:", report["system"]["memory_gib"], "GiB")
+        for item in report["checks"]:
+            print(f"[{item['status'].upper()}] {item['name']}: {item['detail']}")
+        if report["possible_firmware_errors"]:
+            print("\nPossible firmware/driver errors:")
+            for line in report["possible_firmware_errors"]:
+                print("-", line)
+        print("\nNote:", report["warning"])
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
