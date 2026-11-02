@@ -24,6 +24,13 @@ for unit in NetworkManager nftables; do
   rm -f "$link"
   ln -s "../../../../usr/lib/systemd/system/$unit.service" "$link"
 done
+# Boot to the graphical desktop and show the LightDM login screen.
+mkdir -p "$TMP_PROFILE/airootfs/etc/systemd/system/graphical.target.wants"
+ln -sf /usr/lib/systemd/system/graphical.target "$TMP_PROFILE/airootfs/etc/systemd/system/default.target"
+ln -sf /usr/lib/systemd/system/lightdm.service "$TMP_PROFILE/airootfs/etc/systemd/system/display-manager.service"
+# Copy the project desktop defaults into the live user's skeleton.
+mkdir -p "$TMP_PROFILE/airootfs/etc/skel/Desktop"
+find "$TMP_PROFILE/airootfs/etc/skel" -type f -name '*.desktop' -exec chmod 755 {} +
 sed -i 's/^iso_label=.*/iso_label="DARTH_LINUX"/' "$TMP_PROFILE/profiledef.sh"
 sed -i 's/^iso_name=.*/iso_name="darth-linux"/' "$TMP_PROFILE/profiledef.sh"
 sed -i 's/^iso_publisher=.*/iso_publisher="Darth Linux Project"/' "$TMP_PROFILE/profiledef.sh"
