@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-if [[ $# -ne 1 ]]; then echo "Usage: darth-av-scan /path/to/scan" >&2; exit 2; fi
+if [[ $# -gt 1 ]]; then echo "Usage: darth-av-scan [path/to/scan]" >&2; exit 2; fi
+if [[ $# -eq 0 ]]; then
+  [[ -t 0 ]] || { echo "Usage: darth-av-scan /path/to/scan" >&2; exit 2; }
+  read -r -p "File or folder to scan: " TARGET
+else
+  TARGET="$1"
+fi
+[[ -n "$TARGET" ]] || { echo "No scan target supplied." >&2; exit 2; }
 command -v clamscan >/dev/null 2>&1 || { echo "ClamAV is not installed." >&2; exit 1; }
-TARGET="$(realpath -- "$1")"
+TARGET="$(realpath -- "$TARGET")"
 [[ -e "$TARGET" ]] || { echo "Target does not exist: $TARGET" >&2; exit 1; }
 echo "Updating ClamAV signatures (if configured)..."
 freshclam || echo "Warning: signature update failed; using the installed database." >&2
