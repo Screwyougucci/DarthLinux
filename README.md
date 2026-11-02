@@ -22,7 +22,7 @@ Requires an updated Arch Linux host or properly configured Arch VM, root privile
 ```bash
 git clone https://github.com/Screwyougucci/DarthLinux.git
 cd DarthLinux
-sudo ./build.sh
+sudo bash build.sh
 ```
 
 The ISO is written to `out/`; temporary work files are in `work/`.
@@ -37,7 +37,7 @@ The live image includes `archinstall`. Run it from the live session and select e
 - Use security tools only on systems you own or have explicit permission to assess.
 
 ## Optional toolkit
-Run `sudo ./scripts/install-security-tools.sh` after installation to add the optional defensive / authorized lab tools. Review the script before running it.
+Run `sudo bash scripts/install-security-tools.sh` after installation to add the optional defensive / authorized lab tools. Review the script before running it.
 
 ## Layout
 - `build.sh` — Archiso build entry point
