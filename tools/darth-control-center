@@ -95,6 +95,7 @@ class ControlCenter(Gtk.Application):
         launch("Security Dashboard", ["xfce4-terminal", "--command", "darth-center"], "Firewall, system and AV status", 0, 3)
         launch("Authorized Scope Scan", ["xfce4-terminal", "--command", "darth-scope-scan"], "Private lab range only; asks for scope", 1, 3)
         launch("Residential Proxy", ["darth-proxy"], "Configure and test your provider proxy in Firefox", 0, 4)
+        launch("AI Model Manager", ["darth-ai-manager"], "Download Hugging Face GGUF models and run locally", 1, 4)
 
         refresh_button = Gtk.Button(label="Refresh VPN / firewall status")
         refresh_button.connect("clicked", refresh)
