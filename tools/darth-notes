@@ -14,6 +14,7 @@ class Notes(Gtk.Application):
         self.path = None
         self.dirty = False
         self.loading = False
+        self.after_save = None
 
     def do_activate(self):
         self.window = Gtk.ApplicationWindow(application=self)
@@ -116,10 +117,8 @@ class Notes(Gtk.Application):
             if result == Gtk.ResponseType.NO:
                 continuation()
             elif result == Gtk.ResponseType.YES:
+                self.after_save = continuation
                 self.save_file()
-                # Only proceed if save completed successfully.
-                if not self.dirty:
-                    continuation()
         dialog.connect("response", response)
         dialog.present()
 
@@ -187,7 +186,10 @@ class Notes(Gtk.Application):
                 path = Path(file.get_path())
                 self.write_file(path)
             except (OSError, TypeError) as exc:
+                self.after_save = None
                 self.show_error("Could not save file", str(exc))
+        else:
+            self.after_save = None
         chooser.destroy()
 
     def write_file(self, path):
@@ -196,6 +198,7 @@ class Notes(Gtk.Application):
         try:
             path.write_text(text, encoding="utf-8", newline="")
         except (OSError, UnicodeError) as exc:
+            self.after_save = None
             self.show_error("Could not save file", str(exc))
             return
         self.path = path
@@ -203,6 +206,10 @@ class Notes(Gtk.Application):
         self.title()
         self.update_status()
         self.status.set_text(f"Saved · {path}")
+        continuation = self.after_save
+        self.after_save = None
+        if continuation:
+            continuation()
 
     def show_error(self, title, detail):
         dialog = Gtk.MessageDialog(
@@ -232,9 +239,8 @@ class Notes(Gtk.Application):
             if result == Gtk.ResponseType.NO:
                 self.quit()
             elif result == Gtk.ResponseType.YES:
+                self.after_save = self.quit
                 self.save_file()
-                if not self.dirty:
-                    self.quit()
         dialog.connect("response", response)
         dialog.present()
         return True
