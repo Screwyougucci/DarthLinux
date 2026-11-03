@@ -2,6 +2,7 @@
 """Darth Control Center: lightweight GTK4 launcher and status panel."""
 import subprocess
 import threading
+from pathlib import Path
 import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk, Gio, Gdk, GLib
@@ -57,14 +58,16 @@ class ControlCenter(Gtk.Application):
                 display, css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         win = Gtk.ApplicationWindow(application=self)
         win.add_css_class("darth-window")
-        win.set_title("Darth Linux // Control Center")
+        release_file = Path("/etc/darth-linux-release")
+        release = release_file.read_text(encoding="utf-8").strip() if release_file.exists() else "0.5"
+        win.set_title(f"Darth Linux {release} // Control Center")
         win.set_default_size(760, 600)
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
         root.set_margin_top(22); root.set_margin_bottom(22)
         root.set_margin_start(24); root.set_margin_end(24)
         win.set_child(root)
 
-        title = Gtk.Label(label="DARTH LINUX  //  CONTROL CENTER")
+        title = Gtk.Label(label=f"DARTH LINUX {release}  //  CONTROL CENTER")
         title.add_css_class("title-1")
         title.set_halign(Gtk.Align.START)
         root.append(title)
