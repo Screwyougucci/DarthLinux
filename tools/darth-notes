@@ -4,7 +4,7 @@ from pathlib import Path
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, Gio, GLib
+from gi.repository import Gtk, Gio, GLib, Gdk
 
 
 class Notes(Gtk.Application):
@@ -17,7 +17,31 @@ class Notes(Gtk.Application):
         self.after_save = None
 
     def do_activate(self):
+        css = Gtk.CssProvider()
+        css.load_from_data(b"""
+            window.darth-notes { background: #f3f3f3; color: #202020; }
+            .darth-notes headerbar { background: #f3f3f3; color: #202020; }
+            .darth-notes button {
+                background: #fafafa; color: #202020;
+                border: 1px solid #c8c8c8; border-radius: 4px;
+                padding: 5px 12px;
+            }
+            .darth-notes button:hover { background: #e8e8e8; }
+            .darth-notes textview,
+            .darth-notes textview text {
+                background: #ffffff; color: #151515;
+                font-family: monospace; font-size: 11pt;
+            }
+            .darth-notes label { color: #333333; }
+        """)
+        display = Gdk.Display.get_default()
+        if display:
+            Gtk.StyleContext.add_provider_for_display(
+                display, css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+
         self.window = Gtk.ApplicationWindow(application=self)
+        self.window.add_css_class("darth-notes")
         self.window.set_title("Untitled — Darth Notes")
         self.window.set_default_size(850, 620)
 
@@ -51,7 +75,7 @@ class Notes(Gtk.Application):
         self.buffer.connect("changed", self.changed)
         self.editor = Gtk.TextView(buffer=self.buffer)
         self.editor.set_monospace(True)
-        self.editor.set_wrap_mode(Gtk.WrapMode.NONE)
+        self.editor.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
         self.editor.set_left_margin(14)
         self.editor.set_right_margin(14)
         self.editor.set_top_margin(12)
