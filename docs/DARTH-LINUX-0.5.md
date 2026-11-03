@@ -32,7 +32,8 @@ The repository `VERSION` file controls the ISO name and embedded `/etc/darth-lin
 Build on an updated Arch Linux host:
 
 ```bash
-sudo pacman -Syu --needed git\nsudo pacman -Syu --needed git\ngit clone https://github.com/Screwyougucci/DarthLinux.git
+sudo pacman -Syu --needed git
+git clone https://github.com/Screwyougucci/DarthLinux.git
 cd DarthLinux
 sudo bash build.sh
 ```
