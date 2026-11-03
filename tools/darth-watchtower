@@ -76,7 +76,11 @@ class App(Gtk.Application):
   if self.refreshing:return True
   self.refreshing=True
   def collect():
-   values=metrics()
+   try:
+    values=metrics()
+   except Exception as exc:
+    values={key:"unavailable" for key in self.labels}
+    values["Disk"]="unavailable ("+str(exc)+")"
    GLib.idle_add(self.apply_refresh,values)
   threading.Thread(target=collect,daemon=True).start()
   return True
