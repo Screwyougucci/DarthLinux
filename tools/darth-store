@@ -231,7 +231,7 @@ class Store(Gtk.Application):
                 result = subprocess.run(["pacman", "-Sl", "extra"], text=True,
                                         capture_output=True, timeout=120, check=False)
                 if result.returncode != 0:
-                    error = "Official Extra repository search failed.\\n" + (result.stderr or result.stdout)[-8000:]
+                    error = "Official Extra repository search failed.\n" + (result.stderr or result.stdout)[-8000:]
                     matches = []
                 else:
                     matches = []
@@ -327,7 +327,7 @@ class Store(Gtk.Application):
             buttons=Gtk.ButtonsType.YES_NO, text=f"Install {name} from Flathub?"
         )
         dialog.set_secondary_text(
-            f"Application ID: {app_id}\\nInstalls into your user account using Flatpak's sandboxed app format. "
+            f"Application ID: {app_id}\nInstalls into your user account using Flatpak's sandboxed app format. "
             "The first install may download a shared runtime."
         )
 
@@ -353,7 +353,7 @@ class Store(Gtk.Application):
                     )
                     output = (result.stdout or "") + (result.stderr or "")
                     message = (f"Installed {name}." if result.returncode == 0 else
-                               f"Flatpak install failed (exit {result.returncode}).\\n{output[-10000:]}")
+                               f"Flatpak install failed (exit {result.returncode}).\n{output[-10000:]}")
                 except (OSError, subprocess.TimeoutExpired, RuntimeError) as exc:
                     message = "Flatpak install failed: " + str(exc)
                 GLib.idle_add(self.finish_operation, message)
