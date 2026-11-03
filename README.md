@@ -23,7 +23,8 @@ Near-black graphite, crimson accents, and restrained tactical details. Artwork i
 Requires an updated Arch Linux host or properly configured Arch VM, root privileges, internet, archiso, git, and several GB of free disk space.
 
 ```bash
-sudo pacman -Syu --needed git\ngit clone https://github.com/Screwyougucci/DarthLinux.git
+sudo pacman -Syu --needed git
+git clone https://github.com/Screwyougucci/DarthLinux.git
 cd DarthLinux
 sudo bash build.sh
 ```
@@ -31,7 +32,18 @@ sudo bash build.sh
 The ISO is written to `out/`; temporary work files are in `work/`.
 
 ## Install and encryption
-The live image includes the Darth-branded installer, which launches the upstream `archinstall` engine. Select encrypted disk configuration in the guided installer and verify its summary before committing; encryption is not enabled automatically. Back up important data first because selecting a disk can permanently erase it.\n\nAfter the first boot into the installed system, connect to the internet and deploy the complete Darth desktop and package set from the project checkout:\n\n```bash\nsudo pacman -Syu --needed git\ngit clone https://github.com/Screwyougucci/DarthLinux.git\ncd DarthLinux\nsudo bash scripts/install-custom-tools.sh\n```\n\nThis post-install step downloads the full Darth package list, installs the desktop tools and Update Center, applies the system branding, and enables the desktop services. It can take time and use several gigabytes of downloads.
+The live image includes the Darth-branded installer, which launches the upstream `archinstall` engine. Select encrypted disk configuration in the guided installer and verify its summary before committing; encryption is not enabled automatically. Back up important data first because selecting a disk can permanently erase it.
+
+After the first boot into the installed system, connect to the internet and deploy the complete Darth desktop and package set from the project checkout:
+
+```bash
+sudo pacman -Syu --needed git
+git clone https://github.com/Screwyougucci/DarthLinux.git
+cd DarthLinux
+sudo bash scripts/install-custom-tools.sh
+```
+
+This post-install step downloads the full Darth package list, installs the desktop tools and Update Center, applies the system branding, and enables the desktop services. It can take time and use several gigabytes of downloads.
 
 ## Security
 - nftables baseline denies unsolicited inbound traffic.
@@ -90,7 +102,8 @@ Version 0.5 focuses on a unified Darth desktop identity and a built-in Update Ce
 
 ## Darth Linux 0.3 — Hardware Compatibility
 
-Version 0.3 starts with the read-only `darth-hwcheck` diagnostic. It reports basic system and device inventory, boot mode, memory, virtualization flags, and possible current-boot firmware/driver errors. It does not automatically change drivers. See [the 0.3 hardware compatibility plan and validation matrix](docs/DARTH-LINUX-0.3-HARDWARE-COMPATIBILITY.md). Physical hardware testing is still required before making compatibility claims.\n
+Version 0.3 starts with the read-only `darth-hwcheck` diagnostic. It reports basic system and device inventory, boot mode, memory, virtualization flags, and possible current-boot firmware/driver errors. It does not automatically change drivers. See [the 0.3 hardware compatibility plan and validation matrix](docs/DARTH-LINUX-0.3-HARDWARE-COMPATIBILITY.md). Physical hardware testing is still required before making compatibility claims.
+
 
 ## Darth Update Center
 
