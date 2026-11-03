@@ -77,7 +77,7 @@ if [[ -n "${SUDO_USER:-}" ]] && getent passwd "$SUDO_USER" >/dev/null; then
     cat >> "$user_home/.bashrc" <<'EOF'
 # Darth Linux interactive shell identity
 case $- in
-  *i*) PS1='\\[\\e[1;31m\\]DARTH\\[\\e[0m\\] \\[\\e[1;90m\\]\\w\\[\\e[0m\\] \\$ ' ;;
+  *i*) PS1='\[\e[1;31m\]DARTH\[\e[0m\] \[\e[1;90m\]\w\[\e[0m\] \$ ' ;;
 esac
 EOF
     chown "$SUDO_USER:$user_group" "$user_home/.bashrc"
