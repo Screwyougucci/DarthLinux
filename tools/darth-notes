@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+"""Darth Notes: lightweight UTF-8 plain-text editor for XFCE."""
+from pathlib import Path
+import gi
+
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gtk, Gio, GLib
+
+
+class Notes(Gtk.Application):
+    def __init__(self):
+        super().__init__(application_id="org.darthlinux.Notes",
+                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+        self.path = None
+        self.dirty = False
+        self.loading = False
+
+    def do_activate(self):
+        self.window = Gtk.ApplicationWindow(application=self)
+        self.window.set_title("Untitled — Darth Notes")
+        self.window.set_default_size(850, 620)
+
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.window.set_child(root)
+
+        toolbar = Gtk.Box(spacing=6)
+        toolbar.set_margin_top(8)
+        toolbar.set_margin_bottom(8)
+        toolbar.set_margin_start(10)
+        toolbar.set_margin_end(10)
+        root.append(toolbar)
+
+        for label, callback in (("New", self.new_file),
+                                ("Open", self.open_file),
+                                ("Save", self.save_file),
+                                ("Save As", self.save_as)):
+            button = Gtk.Button(label=label)
+            button.connect("clicked", callback)
+            toolbar.append(button)
+
+        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        root.append(separator)
+
+        scroller = Gtk.ScrolledWindow()
+        scroller.set_vexpand(True)
+        scroller.set_hexpand(True)
+        root.append(scroller)
+
+        self.buffer = Gtk.TextBuffer()
+        self.buffer.connect("changed", self.changed)
+        self.editor = Gtk.TextView(buffer=self.buffer)
+        self.editor.set_monospace(True)
+        self.editor.set_wrap_mode(Gtk.WrapMode.NONE)
+        self.editor.set_left_margin(14)
+        self.editor.set_right_margin(14)
+        self.editor.set_top_margin(12)
+        self.editor.set_bottom_margin(12)
+        self.editor.set_accepts_tab(True)
+        scroller.set_child(self.editor)
+
+        self.status = Gtk.Label(label="Ready")
+        self.status.set_xalign(0)
+        self.status.set_margin_start(10)
+        self.status.set_margin_end(10)
+        self.status.set_margin_top(5)
+        self.status.set_margin_bottom(5)
+        root.append(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))
+        root.append(self.status)
+
+        self.create_action("new", self.new_file, ["<Control>n"])
+        self.create_action("open", self.open_file, ["<Control>o"])
+        self.create_action("save", self.save_file, ["<Control>s"])
+        self.window.connect("close-request", self.close_request)
+        self.window.present()
+
+    def create_action(self, name, callback, accelerators):
+        action = Gio.SimpleAction.new(name, None)
+        action.connect("activate", lambda *_: callback())
+        self.add_action(action)
+        self.set_accels_for_action("app." + name, accelerators)
+
+    def title(self):
+        name = self.path.name if self.path else "Untitled"
+        self.window.set_title(("• " if self.dirty else "") + name + " — Darth Notes")
+
+    def changed(self, *_):
+        if not self.loading:
+            self.dirty = True
+            self.title()
+            self.update_status()
+
+    def update_status(self):
+        text = self.buffer.get_text(self.buffer.get_start_iter(),
+                                    self.buffer.get_end_iter(), True)
+        lines = text.count("\n") + 1
+        chars = len(text)
+        location = str(self.path) if self.path else "Unsaved document"
+        self.status.set_text(f"{lines} lines · {chars} characters    |    {location}")
+
+    def confirm_discard(self, continuation):
+        if not self.dirty:
+            continuation()
+            return
+        dialog = Gtk.MessageDialog(
+            transient_for=self.window, modal=True,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.NONE,
+            text="Save changes before continuing?"
+        )
+        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        dialog.add_button("Discard", Gtk.ResponseType.NO)
+        dialog.add_button("Save", Gtk.ResponseType.YES)
+
+        def response(dlg, result):
+            dlg.destroy()
+            if result == Gtk.ResponseType.NO:
+                continuation()
+            elif result == Gtk.ResponseType.YES:
+                self.save_file()
+                # Only proceed if save completed successfully.
+                if not self.dirty:
+                    continuation()
+        dialog.connect("response", response)
+        dialog.present()
+
+    def new_file(self, *_):
+        self.confirm_discard(self.reset_document)
+
+    def reset_document(self):
+        self.loading = True
+        self.buffer.set_text("")
+        self.loading = False
+        self.path = None
+        self.dirty = False
+        self.title()
+        self.update_status()
+
+    def open_file(self, *_):
+        self.confirm_discard(self.choose_open)
+
+    def choose_open(self):
+        chooser = Gtk.FileChooserNative.new(
+            "Open text file", self.window, Gtk.FileChooserAction.OPEN,
+            "Open", "Cancel"
+        )
+        chooser.connect("response", self.open_response)
+        chooser.show()
+
+    def open_response(self, chooser, response):
+        if response == Gtk.ResponseType.ACCEPT:
+            file = chooser.get_file()
+            try:
+                path = Path(file.get_path())
+                text = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeError, TypeError) as exc:
+                self.show_error("Could not open file", str(exc))
+                chooser.destroy()
+                return
+            self.loading = True
+            self.buffer.set_text(text)
+            self.loading = False
+            self.path = path
+            self.dirty = False
+            self.title()
+            self.update_status()
+        chooser.destroy()
+
+    def save_file(self, *_):
+        if self.path is None:
+            self.save_as()
+            return
+        self.write_file(self.path)
+
+    def save_as(self, *_):
+        chooser = Gtk.FileChooserNative.new(
+            "Save text file", self.window, Gtk.FileChooserAction.SAVE,
+            "Save", "Cancel"
+        )
+        chooser.set_current_name(self.path.name if self.path else "Untitled.txt")
+        chooser.connect("response", self.save_as_response)
+        chooser.show()
+
+    def save_as_response(self, chooser, response):
+        if response == Gtk.ResponseType.ACCEPT:
+            file = chooser.get_file()
+            try:
+                path = Path(file.get_path())
+                self.write_file(path)
+            except (OSError, TypeError) as exc:
+                self.show_error("Could not save file", str(exc))
+        chooser.destroy()
+
+    def write_file(self, path):
+        text = self.buffer.get_text(self.buffer.get_start_iter(),
+                                    self.buffer.get_end_iter(), True)
+        try:
+            path.write_text(text, encoding="utf-8", newline="")
+        except (OSError, UnicodeError) as exc:
+            self.show_error("Could not save file", str(exc))
+            return
+        self.path = path
+        self.dirty = False
+        self.title()
+        self.update_status()
+        self.status.set_text(f"Saved · {path}")
+
+    def show_error(self, title, detail):
+        dialog = Gtk.MessageDialog(
+            transient_for=self.window, modal=True,
+            message_type=Gtk.MessageType.ERROR,
+            buttons=Gtk.ButtonsType.CLOSE, text=title
+        )
+        dialog.set_secondary_text(detail)
+        dialog.connect("response", lambda dlg, _r: dlg.destroy())
+        dialog.present()
+
+    def close_request(self, *_):
+        if not self.dirty:
+            return False
+        dialog = Gtk.MessageDialog(
+            transient_for=self.window, modal=True,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.NONE,
+            text="You have unsaved changes."
+        )
+        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        dialog.add_button("Discard and Close", Gtk.ResponseType.NO)
+        dialog.add_button("Save", Gtk.ResponseType.YES)
+
+        def response(dlg, result):
+            dlg.destroy()
+            if result == Gtk.ResponseType.NO:
+                self.quit()
+            elif result == Gtk.ResponseType.YES:
+                self.save_file()
+                if not self.dirty:
+                    self.quit()
+        dialog.connect("response", response)
+        dialog.present()
+        return True
+
+
+Notes().run(None)
