@@ -5,4 +5,4 @@ Comment=Hardware inventory and driver diagnostics
 Exec=darth-driver-manager
 Icon=preferences-system
 Terminal=false
-Categories=System;Settings;
+Categories=Settings;
