@@ -19,14 +19,23 @@ for db in /var/lib/clamav/*.cvd /var/lib/clamav/*.cld; do
   (( db_mtime > latest_db )) && latest_db="$db_mtime"
 done
 now="$(date +%s)"
+UPDATE_STAMP="$HOME/.cache/darth-linux/clamav-last-update-attempt"
+last_attempt=0
+[[ -f "$UPDATE_STAMP" ]] && read -r last_attempt < "$UPDATE_STAMP" || true
 if (( latest_db > 0 && now - latest_db < 3600 )); then
   echo "Signature database was updated within the last hour; skipping another CDN check."
 elif systemctl is-active --quiet clamav-freshclam.service || systemctl is-active --quiet clamav-freshclam-once.timer; then
   echo "Automatic ClamAV updater is enabled; leaving database updates to systemd."
+elif (( last_attempt > 0 && now - last_attempt < 3600 )); then
+  echo "A signature update was attempted within the last hour; skipping another CDN check."
 elif [[ $EUID -eq 0 ]]; then
+  mkdir -p "$(dirname "$UPDATE_STAMP")"
+  printf '%s\n' "$now" > "$UPDATE_STAMP"
   freshclam || echo "Warning: signature update failed; using the installed database." >&2
 elif command -v sudo >/dev/null 2>&1; then
   echo "Administrator permission is needed to update the system-wide signature database."
+  mkdir -p "$(dirname "$UPDATE_STAMP")"
+  printf '%s\n' "$now" > "$UPDATE_STAMP"
   sudo freshclam || echo "Warning: signature update failed or was declined; using the installed database." >&2
 else
   echo "Warning: cannot update system-wide signatures without administrator permission; using the installed database." >&2
