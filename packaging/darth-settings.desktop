@@ -5,5 +5,5 @@ Comment=Configure your Darth desktop, audio, display, network and system
 Exec=darth-settings
 Icon=preferences-system
 Terminal=false
-Categories=Settings;System;
+Categories=Settings;
 StartupNotify=true
