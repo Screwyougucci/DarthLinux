@@ -42,11 +42,16 @@ def metrics():
    name,vals=line.split(":");v=list(map(int,vals.split()))
    if name.strip()!="lo":rx+=v[0];tx+=v[8]
  except Exception:pass
- return {"CPU":cpu,"Memory":f"{(total-avail)/1024:.0f} / {total/1024:.0f} MiB","Disk":f"{du.used/du.total*100:.1f}% used ({du.free//(1024**3)} GiB free)","Network":f"RX {rx/1048576:.1f} MiB total · TX {tx/1048576:.1f} MiB total","Firewall service":cmd(["systemctl","is-active","nftables"]),"ClamAV daemon":cmd(["systemctl","is-active","clamav-daemon"]),"Kernel":cmd(["uname","-r"])}
+ return {"CPU":cpu,"Memory":f"{(total-avail)/1024:.0f} / {total/1024:.0f} MiB","Disk":f"{du.used/du.total*100:.1f}% used ({du.free//(1024**3)} GiB free)","Network":f"RX {rx/1048576:.1f} MiB total · TX {tx/1048576:.1f} MiB total","Firewall service":cmd(["systemctl","is-active","nftables"]),"Darth firewall rules":firewall_rules_status(),"ClamAV daemon":cmd(["systemctl","is-active","clamav-daemon"]),"Kernel":cmd(["uname","-r"])}
 def cmd(args):
  try:
   p=subprocess.run(args,text=True,capture_output=True,timeout=2);return (p.stdout or p.stderr).strip() or "not reported"
  except Exception:return "unavailable"
+def firewall_rules_status():
+ try:
+  p=subprocess.run(["nft","list","table","inet","darth_filter"],text=True,capture_output=True,timeout=2)
+  return "loaded" if p.returncode == 0 else "not loaded"
+ except (OSError,subprocess.TimeoutExpired):return "unavailable"
 class App(Gtk.Application):
  def __init__(self):super().__init__(application_id="org.darthlinux.Watchtower",flags=Gio.ApplicationFlags.DEFAULT_FLAGS);self.values={};self.refreshing=False;self.css_provider=None
  def do_activate(self):
@@ -57,7 +62,7 @@ class App(Gtk.Application):
   self.theme=Gtk.DropDown.new_from_strings(list(THEMES));top.append(self.theme);self.theme.connect("notify::selected",lambda *_:self.style())
   self.grid=Gtk.Grid(column_spacing=12,row_spacing=12);self.grid.set_hexpand(True);self.grid.set_vexpand(True);root.append(self.grid)
   self.labels={}
-  for i,k in enumerate(["CPU","Memory","Disk","Network","Firewall service","ClamAV daemon","Kernel"]):
+  for i,k in enumerate(["CPU","Memory","Disk","Network","Firewall service","Darth firewall rules","ClamAV daemon","Kernel"]):
    frame=Gtk.Frame(label=k);box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8);box.set_margin_top(14);box.set_margin_bottom(14);box.set_margin_start(14);box.set_margin_end(14)
    val=Gtk.Label(label="Collecting…");val.set_wrap(True);val.set_xalign(0);box.append(val);frame.set_child(box);self.grid.attach(frame,i%2,i//2,1,1);self.labels[k]=val
   actions=Gtk.Box(spacing=8);root.append(actions)
@@ -90,6 +95,9 @@ class App(Gtk.Application):
   self.refreshing=False
   return False
  def export(self):
+  if not self.values:
+   self.set_status("No metrics collected yet. Wait for the first refresh, then export.")
+   return
   path=Path.home()/("darth-watchtower-"+time.strftime("%Y%m%d-%H%M%S")+".csv")
   with path.open("w",newline="") as f:
    wr=csv.writer(f);wr.writerow(["metric","value","captured_local"]);[wr.writerow([k,v,time.strftime("%Y-%m-%d %H:%M:%S")]) for k,v in self.values.items()]
