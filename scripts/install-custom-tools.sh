@@ -48,6 +48,7 @@ install -Dm644 "$ROOT/profiles/darth/airootfs/usr/share/backgrounds/darth-linux/
   /usr/share/backgrounds/darth-linux/wallpaper.svg
 install -Dm644 "$ROOT/profiles/darth/airootfs/etc/lightdm/lightdm-gtk-greeter.conf" \
   /etc/lightdm/lightdm-gtk-greeter.conf
+install -Dm644 "$ROOT/profiles/darth/airootfs/etc/nftables.conf" /etc/nftables.conf
 install -Dm644 "$ROOT/profiles/darth/airootfs/etc/darth-linux-release" /etc/darth-linux-release
 printf 'Darth Linux %s // Installed System\n' "$VERSION" > /etc/issue
 
