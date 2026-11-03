@@ -72,7 +72,7 @@ desktop_config.read(desktop, encoding="utf-8")
 if desktop_config.get("Desktop Entry", "Exec", fallback="") != "darth-installer":
     sys.exit("Darth Installer desktop entry does not launch darth-installer.")
 
-for app_name, expected_exec in (("darth-terminal.desktop", "xfce4-terminal --title=\\"DARTH // TERMINAL\\""),
+for app_name, expected_exec in (("darth-terminal.desktop", "xfce4-terminal --title=DARTH-TERMINAL"),
                           ("darth-files.desktop", "thunar")):
     entry_path = ROOT / "packaging" / app_name
     entry = configparser.ConfigParser(interpolation=None)
