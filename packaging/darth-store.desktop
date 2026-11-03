@@ -5,5 +5,5 @@ Comment=Discover and install apps, AI tools, games and utilities
 Exec=darth-store
 Icon=darth-store
 Terminal=false
-Categories=System;PackageManager;
+Categories=Settings;PackageManager;
 StartupNotify=true
