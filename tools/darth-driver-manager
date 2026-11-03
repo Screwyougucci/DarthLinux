@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Darth Driver Manager: local hardware inventory and conservative guidance."""
-import subprocess,shutil
+import subprocess,shutil,threading
 import gi
 gi.require_version("Gtk","4.0")
-from gi.repository import Gtk,Gio
+from gi.repository import Gtk,Gio,GLib
 def run(args):
  try:
   p=subprocess.run(args,text=True,capture_output=True,timeout=8);return (p.stdout or p.stderr).strip() or "(no output)"
@@ -17,11 +17,24 @@ class App(Gtk.Application):
   msg=Gtk.Label(label="Hardware inventory and diagnostics. This tool does not silently install drivers.");msg.set_xalign(0);box.append(msg)
   view=Gtk.TextView();view.set_editable(False);view.set_monospace(True);view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
   scroll=Gtk.ScrolledWindow();scroll.set_vexpand(True);scroll.set_child(view);box.append(scroll)
+  refresh_state={"busy":False}
+  def apply_refresh(report):
+   view.get_buffer().set_text(report)
+   refresh_state["busy"]=False
+   b.set_sensitive(True)
+   return GLib.SOURCE_REMOVE
   def refresh(*_):
-   parts=[]
-   for title,args in [("PCI DEVICES",["lspci","-nnk"]),("USB DEVICES",["lsusb"]),("NETWORK",["ip","-brief","link"]),("GRAPHICS",["sh","-c","ls -l /dev/dri 2>/dev/null || true"]),("FIRMWARE ERRORS",["sh","-c","journalctl -k -b --no-pager 2>/dev/null | grep -iE 'firmware.*(fail|missing)|failed to load firmware' | tail -40 || true"]),("BLOCK DEVICES",["lsblk","-o","NAME,TYPE,FSTYPE,SIZE,MODEL"])]:
-    parts.append("\n===== "+title+" =====\n"+run(args))
-   view.get_buffer().set_text("\n".join(parts))
+   if refresh_state["busy"]:return
+   refresh_state["busy"]=True
+   b.set_sensitive(False)
+   view.get_buffer().set_text("Scanning hardware inventory…")
+   def worker():
+    parts=[]
+    checks=[("PCI DEVICES",["lspci","-nnk"]),("USB DEVICES",["lsusb"]),("NETWORK",["ip","-brief","link"]),("GRAPHICS",["sh","-c","ls -l /dev/dri 2>/dev/null || true"]),("FIRMWARE ERRORS",["sh","-c","journalctl -k -b --no-pager 2>/dev/null | grep -iE 'firmware.*(fail|missing)|failed to load firmware' | tail -40 || true"]),("BLOCK DEVICES",["lsblk","-o","NAME,TYPE,FSTYPE,SIZE,MODEL"])]
+    for title,args in checks:
+     parts.append("\\n===== "+title+" =====\\n"+run(args))
+    GLib.idle_add(apply_refresh,"\\n".join(parts))
+   threading.Thread(target=worker,daemon=True).start()
   b=Gtk.Button(label="Refresh hardware inventory");b.connect("clicked",refresh);box.append(b)
   g=Gtk.Label(label="Guidance: Intel/AMD graphics usually use in-kernel drivers plus Mesa. NVIDIA choices depend on exact GPU and kernel. Install only signed packages from configured Arch repositories. Confirm hardware model and read package changes first.");g.set_wrap(True);g.set_xalign(0);box.append(g)
   refresh();w.present()
