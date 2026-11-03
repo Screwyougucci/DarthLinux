@@ -71,6 +71,8 @@ FLATPAK_CATALOG = [
 ]
 
 PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9@._+:-]{0,127}$")
+SEARCH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ._+:-]{0,79}$")
+OFFICIAL_REPOSITORIES = {"core", "extra", "multilib", "core-testing", "extra-testing", "multilib-testing"}
 
 
 class Store(Gtk.Application):
@@ -242,28 +244,35 @@ class Store(Gtk.Application):
 
     def search(self, *_):
         query = self.entry.get_text().strip()
-        if not query or len(query) > 128 or not PACKAGE_RE.fullmatch(query):
-            self.set_status("Enter a package name (letters, numbers and . _ + : -).")
+        if not query or not SEARCH_RE.fullmatch(query):
+            self.set_status("Enter a search term (letters, numbers, spaces and . _ + : -; 80 characters max).")
             return
         if self.busy:
             self.set_status("Wait for the current package operation to finish.")
             return
         self.busy = True
-        self.set_status("Searching all configured official repositories…")
+        self.set_status("Searching official Arch repositories by name and description…")
 
         def worker():
             try:
-                result = subprocess.run(["pacman", "-Sl"], text=True,
-                                        capture_output=True, timeout=120, check=False)
-                if result.returncode != 0:
-                    error = "Official repository search failed.\n" + (result.stderr or result.stdout)[-8000:]
+                result = subprocess.run(
+                    ["pacman", "-Ss", re.escape(query)], text=True,
+                    capture_output=True, timeout=120, check=False
+                )
+                if result.returncode not in (0, 1):
+                    error = "Official repository search failed.\\n" + (result.stderr or result.stdout)[-8000:]
                     matches = []
                 else:
                     matches = []
-                    for line in result.stdout.splitlines():
-                        fields = line.split()
-                        if len(fields) >= 3 and query.casefold() in fields[1].casefold():
-                            matches.append((fields[1], fields[2] + " · " + fields[0]))
+                    lines = result.stdout.splitlines()
+                    header_re = re.compile(r"^([A-Za-z0-9_-]+)/([A-Za-z0-9@._+:-]+)\\s+(\\S+)(?:\\s+\\[installed\\])?$")
+                    for index, line in enumerate(lines):
+                        match = header_re.fullmatch(line.strip())
+                        if not match or match.group(1) not in OFFICIAL_REPOSITORIES:
+                            continue
+                        description = lines[index + 1].strip() if index + 1 < len(lines) else ""
+                        repository, package, version = match.groups()
+                        matches.append((repository, package, version, description))
                     error = ""
                 GLib.idle_add(self.display_search_results, query, matches[:150], error)
             except (OSError, subprocess.TimeoutExpired) as exc:
@@ -274,7 +283,7 @@ class Store(Gtk.Application):
     def display_search_results(self, query, matches, error):
         self.busy = False
         self.clear_results()
-        heading = Gtk.Label(label=f"OFFICIAL EXTRA SEARCH  //  {query}")
+        heading = Gtk.Label(label=f"DARTH APP SEARCH  //  {query}")
         heading.set_xalign(0)
         heading.add_css_class("heading")
         self.results.append(heading)
@@ -285,10 +294,10 @@ class Store(Gtk.Application):
         if error:
             self.set_status(error)
         elif not matches:
-            self.set_status("No matching package names found in the official Extra repository.")
+            self.set_status("No matches found in the official repositories. Try a shorter or different search.")
         else:
-            self.set_status(f"{len(matches)} matching package(s) shown. Select Install to review the package transaction.")
-            for package, version in matches:
+            self.set_status(f"{len(matches)} matching apps/packages shown (up to 150). Review dependencies before installing.")
+            for repository, package, version, description in matches:
                 row = Gtk.Box(spacing=10)
                 details = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
                 details.set_hexpand(True)
@@ -296,13 +305,14 @@ class Store(Gtk.Application):
                 name.set_xalign(0)
                 name.add_css_class("heading")
                 details.append(name)
-                version_label = Gtk.Label(label=f"Extra repository · {version}")
-                version_label.set_xalign(0)
-                version_label.add_css_class("dim-label")
-                details.append(version_label)
+                summary = Gtk.Label(label=f"{repository} · {version}" + (f" · {description}" if description else ""))
+                summary.set_xalign(0)
+                summary.set_wrap(True)
+                summary.add_css_class("dim-label")
+                details.append(summary)
                 row.append(details)
                 install = Gtk.Button(label="Install…")
-                install.connect("clicked", lambda _b, p=package: self.confirm_install(p, p))
+                install.connect("clicked", lambda _b, r=repository, p=package: self.confirm_install(r + "/" + p, p))
                 row.append(install)
                 self.results.append(row)
         return False
