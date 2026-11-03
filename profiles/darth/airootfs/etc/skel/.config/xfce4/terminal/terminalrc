@@ -1,0 +1,16 @@
+[Configuration]
+ColorBackground=#0b0d12
+ColorForeground=#edf0f5
+ColorCursor=#c51d38
+ColorCursorUseDefault=FALSE
+ColorSelection=#5a1826
+ColorSelectionUseDefault=FALSE
+ColorPalette=#20242c;#c51d38;#6aa56a;#c49b45;#648bc4;#a77ac4;#55a6a6;#c5c8ce;#555c68;#ed526a;#8bc58b;#e2bb65;#8bb3ed;#c39bdf;#78c9c9;#edf0f5
+FontName=Monospace 10
+MiscAlwaysShowTabs=FALSE
+MiscBell=FALSE
+MiscCursorBlinks=FALSE
+MiscMouseAutohide=TRUE
+MiscDefaultGeometry=110x32
+ScrollingBar=TERMINAL_SCROLLBAR_NONE
+ScrollingLines=10000
