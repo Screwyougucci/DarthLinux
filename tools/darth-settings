@@ -2,6 +2,7 @@
 """Darth Settings: audio, display, camera, media, network and system controls."""
 import shutil
 import subprocess
+import threading
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -97,7 +98,7 @@ class DarthSettings(Gtk.Application):
             transport = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
             for label, verb in [("Previous", "previous"), ("Play / Pause", "play-pause"), ("Next", "next")]:
                 button = Gtk.Button(label=label)
-                button.connect("clicked", lambda _button, action=verb: command(["playerctl", action]))
+                button.connect("clicked", lambda _button, action=verb: launch(["playerctl", action]))
                 transport.append(button)
             parent.append(transport)
 
@@ -107,22 +108,48 @@ class DarthSettings(Gtk.Application):
         vol_label = Gtk.Label(label="Volume"); vol_label.set_halign(Gtk.Align.START); a.append(vol_label)
         volume = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 150, 1)
         volume.set_draw_value(True); volume.set_value(50); a.append(volume)
-        muted = {"value": False}
-        def read_volume():
-            rc, out = command(["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"])
-            if rc == 0:
-                try:
-                    value = float(out.split()[1]) * 100
-                    volume.set_value(min(150, max(0, value)))
-                    muted["value"] = "[MUTED]" in out
-                except (IndexError, ValueError):
-                    pass
+        muted = {"value": False, "updating": False}
+        mute = Gtk.Button(label="Mute")
+        def apply_volume(value, is_muted):
+            muted["updating"] = True
+            volume.set_value(min(150, max(0, value)))
+            muted["updating"] = False
+            muted["value"] = is_muted
+            mute.set_label("Unmute" if is_muted else "Mute")
+            return False
+        def read_volume(*_):
+            def worker():
+                rc, out = command(["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"])
+                value = None
+                is_muted = False
+                if rc == 0:
+                    try:
+                        value = float(out.split()[1]) * 100
+                        is_muted = "[MUTED]" in out
+                    except (IndexError, ValueError):
+                        pass
+                if value is not None:
+                    GLib.idle_add(apply_volume, value, is_muted)
+            threading.Thread(target=worker, daemon=True).start()
         def set_volume(scale):
-            command(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", f"{scale.get_value()/100:.2f}"])
+            if muted["updating"]:
+                return
+            value = f"{scale.get_value()/100:.2f}"
+            try:
+                subprocess.Popen(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", value],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except OSError:
+                pass
+        def toggle_mute(*_):
+            try:
+                subprocess.Popen(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                GLib.timeout_add(350, read_volume)
+            except OSError:
+                pass
         volume.connect("value-changed", set_volume)
-        volume.connect("map", lambda *_: read_volume())
-        mute = Gtk.Button(label="Toggle mute")
-        mute.connect("clicked", lambda *_: command(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]))
+        volume.connect("map", read_volume)
+        mute.connect("clicked", toggle_mute)
         a.append(mute)
         media_controls(a)
         action(a, "Open advanced audio mixer", ["pavucontrol"], "Choose output devices, input devices, per-app volume and profiles.")
