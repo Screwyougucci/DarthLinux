@@ -94,6 +94,10 @@ for token in ("def show_message(", "os.O_EXCL", "0o600", "permission denied"):
     if token not in watchtower.lower():
         sys.exit(f"Watchtower regression check failed: missing {token}")
 
+control_source = (ROOT / "tools/darth-control-center").read_text(encoding="utf-8")
+if "threading.Thread(target=worker, daemon=True).start()" not in control_source or "GLib.idle_add(apply_refresh, message)" not in control_source:
+    sys.exit("Control Center status refresh must run in a worker thread and update GTK via GLib.")
+
 control = (ROOT / "tools/darth-control-center").read_text(encoding="utf-8").lower()
 if "permission denied" not in control or "unknown (administrator permission required)" not in control:
     sys.exit("Control Center firewall permission handling regression.")
