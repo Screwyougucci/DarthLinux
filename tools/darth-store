@@ -62,6 +62,12 @@ FLATPAK_CATALOG = [
     ("Flatseal Permissions Manager", "com.github.tchx84.Flatseal"),
     ("Easy Effects Audio", "com.github.wwmm.easyeffects"),
     ("LocalSend File Transfer", "org.localsend.localsend_app"),
+    ("🎮 SuperTuxKart — kart racing", "net.supertuxkart.SuperTuxKart"),
+    ("🎮 0 A.D. — historical real-time strategy", "com.play0ad.zeroad"),
+    ("🎮 Battle for Wesnoth — fantasy turn-based strategy", "org.wesnoth.Wesnoth"),
+    ("🎮 OpenTTD — transport and railway simulation", "org.openttd.OpenTTD"),
+    ("🎮 Luanti — open voxel sandbox (formerly Minetest)", "net.minetest.Minetest"),
+    ("🎮 SuperTux — 2D platform adventure", "org.supertux.SuperTux"),
 ]
 
 PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9@._+:-]{0,127}$")
