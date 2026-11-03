@@ -62,6 +62,11 @@ match = header.fullmatch(sample)
 if not match or match.group(1) != "extra" or match.group(2) != "firefox":
     sys.exit("Darth Store package-search result parser failed its regression sample.")
 
+ai_manager = (ROOT / "tools/darth-ai-manager").read_text(encoding="utf-8")
+for token in ("/health", "server_ready", "apply_server_probe", "def do_shutdown(self)"):
+    if token not in ai_manager:
+        sys.exit(f"AI Manager readiness/shutdown regression: missing {token}")
+
 watchtower = (ROOT / "tools/darth-watchtower").read_text(encoding="utf-8")
 if "self.set_status(" in watchtower:
     sys.exit("Watchtower calls an undefined set_status method.")
