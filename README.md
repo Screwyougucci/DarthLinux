@@ -31,7 +31,7 @@ sudo bash build.sh
 The ISO is written to `out/`; temporary work files are in `work/`.
 
 ## Install and encryption
-The live image includes `archinstall`. Run it from the live session and select encrypted disk configuration in the guided installer. Back up important data first: selecting a disk can permanently erase it. Encryption is not enabled automatically; verify the installer summary before committing.
+The live image includes the Darth-branded installer, which launches the upstream `archinstall` engine. Select encrypted disk configuration in the guided installer and verify its summary before committing; encryption is not enabled automatically. Back up important data first because selecting a disk can permanently erase it.\n\nAfter the first boot into the installed system, connect to the internet and deploy the complete Darth desktop and package set from the project checkout:\n\n```bash\ngit clone https://github.com/Screwyougucci/DarthLinux.git\ncd DarthLinux\nsudo bash scripts/install-custom-tools.sh\n```\n\nThis post-install step downloads the full Darth package list, installs the desktop tools and Update Center, applies the system branding, and enables the desktop services. It can take time and use several gigabytes of downloads.
 
 ## Security
 - nftables baseline denies unsolicited inbound traffic.
