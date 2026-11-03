@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Darth Control Center: lightweight GTK4 launcher and status panel."""
 import subprocess
+import threading
 import gi
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, Gio, Gdk
+from gi.repository import Gtk, Gio, Gdk, GLib
 
 def run(args):
     try:
@@ -78,13 +79,31 @@ class ControlCenter(Gtk.Application):
         status.add_css_class("card")
         root.append(status)
 
+        refresh_state = {"busy": False}
+
+        def apply_refresh(message):
+            status.set_text(message)
+            refresh_state["busy"] = False
+            return GLib.SOURCE_REMOVE
+
         def refresh(*_):
-            active = run(["nmcli", "-t", "-f", "NAME,TYPE,DEVICE", "connection", "show", "--active"])
-            vpn_lines = [line for line in active.splitlines() if "vpn" in line.lower() or "wireguard" in line.lower()]
-            vpn = "\n".join(vpn_lines) if vpn_lines else "No VPN connection currently active"
-            firewall = run(["systemctl", "is-active", "nftables"])
-            rules = firewall_rules_status()
-            status.set_text("NETWORK / VPN STATUS\n" + vpn + "\n\nFirewall service (nftables): " + firewall + "\nDarth firewall rules: " + rules)
+            if refresh_state["busy"]:
+                return
+            refresh_state["busy"] = True
+            status.set_text("Refreshing network and firewall status…")
+
+            def worker():
+                active = run(["nmcli", "-t", "-f", "NAME,TYPE,DEVICE", "connection", "show", "--active"])
+                vpn_lines = [line for line in active.splitlines() if "vpn" in line.lower() or "wireguard" in line.lower()]
+                vpn = "\n".join(vpn_lines) if vpn_lines else "No VPN connection currently active"
+                firewall = run(["systemctl", "is-active", "nftables"])
+                rules = firewall_rules_status()
+                message = ("NETWORK / VPN STATUS\n" + vpn + "\n\nFirewall service (nftables): "
+                           + firewall + "\nDarth firewall rules: " + rules)
+                GLib.idle_add(apply_refresh, message)
+
+            threading.Thread(target=worker, daemon=True).start()
+
         refresh()
 
         grid = Gtk.Grid(column_spacing=10, row_spacing=10)
