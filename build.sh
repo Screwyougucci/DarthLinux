@@ -19,6 +19,26 @@ cp -a "$BASE_PROFILE/." "$TMP_PROFILE/"
 cat "$PROFILE_DIR/packages.x86_64" >> "$TMP_PROFILE/packages.x86_64"
 cp -a "$PROFILE_DIR/airootfs/." "$TMP_PROFILE/airootfs/"
 
+# Brand both Archiso boot paths while preserving Arch's boot infrastructure.
+BOOT_SPLASH="$ROOT_DIR/profiles/darth/boot/splash.svg"
+[[ -f "$BOOT_SPLASH" ]] || die "Missing Darth boot splash: $BOOT_SPLASH"
+command -v rsvg-convert >/dev/null 2>&1 || die "Install librsvg to render the boot splash"
+mkdir -p "$TMP_PROFILE/syslinux"
+rsvg-convert -w 640 -h 480 "$BOOT_SPLASH" > "$TMP_PROFILE/syslinux/splash.png"
+for cfg in "$TMP_PROFILE"/syslinux/*.cfg; do
+  [[ -f "$cfg" ]] || continue
+  sed -i 's/Arch Linux/Darth Linux/g' "$cfg"
+  if grep -q '^UI vesamenu.c32' "$cfg" && ! grep -q '^MENU BACKGROUND splash.png' "$cfg"; then
+    sed -i '/^UI vesamenu.c32/a MENU BACKGROUND splash.png' "$cfg"
+  fi
+done
+if [[ -d "$TMP_PROFILE/efiboot/loader/entries" ]]; then
+  for entry in "$TMP_PROFILE"/efiboot/loader/entries/*.conf; do
+    [[ -f "$entry" ]] || continue
+    sed -i 's/^title Arch Linux/title Darth Linux/' "$entry"
+  done
+fi
+
 # Bake the project's original command-line and GTK tools into the live image.
 BIN_DIR="$TMP_PROFILE/airootfs/usr/local/bin"
 APP_DIR="$TMP_PROFILE/airootfs/usr/share/applications"
@@ -76,6 +96,7 @@ find "$TMP_PROFILE/airootfs/etc/skel" -type f -name '*.desktop' -exec chmod 755 
 sed -i 's/^iso_label=.*/iso_label="DARTH_LINUX"/' "$TMP_PROFILE/profiledef.sh"
 sed -i 's/^iso_name=.*/iso_name="darth-linux"/' "$TMP_PROFILE/profiledef.sh"
 sed -i 's/^iso_publisher=.*/iso_publisher="Darth Linux Project"/' "$TMP_PROFILE/profiledef.sh"
+sed -i 's/^iso_application=.*/iso_application="Darth Linux Live System"/' "$TMP_PROFILE/profiledef.sh"
 
 printf '\nBuilding Darth Linux from the official Archiso releng profile...\n'
 mkarchiso -v -w "$WORK_DIR" -o "$OUT_DIR" "$TMP_PROFILE"
