@@ -62,8 +62,25 @@ if [[ -n "${SUDO_USER:-}" ]] && getent passwd "$SUDO_USER" >/dev/null; then
   user_group="$(id -gn "$SUDO_USER")"
   install -d -o "$SUDO_USER" -g "$user_group" "$user_home/.config"
   cp -an /etc/skel/.config/. "$user_home/.config/"
+  for relative in gtk-3.0/settings.ini gtk-4.0/settings.ini \
+      xfce4/terminal/terminalrc \
+      xfce4/xfconf/xfce-perchannel-xml/xsettings.xml \
+      xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml \
+      xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml; do
+    source_file="$ROOT/profiles/darth/airootfs/etc/skel/.config/$relative"
+    [[ -f "$source_file" ]] || continue
+    install -D -o "$SUDO_USER" -g "$user_group" -m644 "$source_file" "$user_home/.config/$relative"
+  done
   if [[ ! -e "$user_home/.bashrc" ]]; then
     install -o "$SUDO_USER" -g "$user_group" -m644 /etc/skel/.bashrc "$user_home/.bashrc"
+  elif ! grep -q "Darth Linux interactive shell identity" "$user_home/.bashrc"; then
+    cat >> "$user_home/.bashrc" <<'EOF'
+# Darth Linux interactive shell identity
+case $- in
+  *i*) PS1='\\[\\e[1;31m\\]DARTH\\[\\e[0m\\] \\[\\e[1;90m\\]\\w\\[\\e[0m\\] \\$ ' ;;
+esac
+EOF
+    chown "$SUDO_USER:$user_group" "$user_home/.bashrc"
   fi
   chown -R "$SUDO_USER:$user_group" "$user_home/.config"
 fi
