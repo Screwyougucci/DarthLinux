@@ -262,7 +262,7 @@ class DarthSettings(Gtk.Application):
                 update_state["system_updates"] = True
                 install_button.set_sensitive(True)
                 update_status.set_text(f"{len(lines)} system package update(s) are available.")
-                show_update_output("\\n".join(lines))
+                show_update_output("\n".join(lines))
             elif returncode == 2:
                 update_state["system_updates"] = False
                 install_button.set_sensitive(False)
@@ -305,7 +305,7 @@ class DarthSettings(Gtk.Application):
             update_state["busy"] = False
             check_button.set_sensitive(True)
             install_button.set_sensitive(False)
-            output = (stdout or "") + (("\\n" + stderr) if stderr else "")
+            output = (stdout or "") + (("\n" + stderr) if stderr else "")
             log_dir = Path.home() / ".local/state/darth-linux"
             try:
                 log_dir.mkdir(parents=True, exist_ok=True)
@@ -336,7 +336,7 @@ class DarthSettings(Gtk.Application):
             def worker():
                 try:
                     result = subprocess.run(
-                        ["pkexec", "pacman", "-Syu", "--noconfirm"],
+                        ["pkexec", "/usr/bin/pacman", "-Syu", "--noconfirm"],
                         text=True, capture_output=True, timeout=3600, check=False
                     )
                     GLib.idle_add(finish_system_install, result.returncode, result.stdout, result.stderr)
@@ -350,7 +350,7 @@ class DarthSettings(Gtk.Application):
             check_button.set_sensitive(True)
             install_button.set_sensitive(update_state["system_updates"])
             flatpak_button.set_sensitive(shutil.which("flatpak") is not None)
-            output = (stdout or "") + (("\\n" + stderr) if stderr else "")
+            output = (stdout or "") + (("\n" + stderr) if stderr else "")
             if returncode == 0:
                 update_status.set_text("Per-user Flatpak applications and runtimes are up to date.")
             else:
