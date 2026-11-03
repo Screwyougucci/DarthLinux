@@ -2,7 +2,7 @@
 
 ## Darth Control Center
 
-Install the original GTK4 dashboard and its launcher:
+The 0.5 post-install setup installs the GTK4 dashboard and its launcher. On a fresh Archinstall target, first run `sudo bash scripts/install-custom-tools.sh` from the Darth Linux repository checkout:
 
 ```bash
 sudo bash scripts/install-custom-tools.sh
