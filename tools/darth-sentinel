@@ -33,6 +33,20 @@ clamscan = shutil.which("clamscan")
 if not clamscan:
     sys.exit("ClamAV is not installed.")
 
+# Make stale or missing definitions visible; a clean scan with old signatures
+# must not look like a current, fully up-to-date result.
+database_dir = Path("/var/lib/clamav")
+database_files = list(database_dir.glob("*.cvd")) + list(database_dir.glob("*.cld"))
+if not database_files:
+    print("WARNING: no ClamAV signature database found in /var/lib/clamav.")
+    print("Run 'sudo freshclam' before relying on scan results.")
+else:
+    newest_database = max(path.stat().st_mtime for path in database_files)
+    age_days = max(0, int((time.time() - newest_database) // 86400))
+    print(f"ClamAV signature database age: {age_days} day(s).")
+    if age_days >= 7:
+        print("WARNING: signatures are at least seven days old; update before relying on this scan.")
+
 try:
     proc = subprocess.run(
         [clamscan, "--infected", "--recursive", "--no-summary", "--", str(target)],
