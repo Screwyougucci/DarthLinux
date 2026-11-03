@@ -92,8 +92,8 @@ class Store(Gtk.Application):
         title.set_xalign(0)
         root.append(title)
         intro = Gtk.Label(
-            label="Open-source applications from configured official Arch repositories. "
-                  "No AUR packages, third-party install scripts, or silent installs."
+            label="Arch apps come from configured official repositories. Optional Flatpak apps come from Flathub. "
+                  "No AUR packages or downloaded shell installers; review each install before approving it."
         )
         intro.set_xalign(0)
         intro.set_wrap(True)
