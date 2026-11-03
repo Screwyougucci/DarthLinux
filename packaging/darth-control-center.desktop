@@ -6,5 +6,5 @@ Comment=System, VM, network, VPN and security dashboard
 Exec=darth-control-center
 Icon=utilities-system-monitor
 Terminal=false
-Categories=System;Security;Network;
+Categories=System;
 StartupNotify=true
