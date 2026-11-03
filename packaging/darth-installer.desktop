@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Darth Installer
+Comment=Install Darth Linux using the Arch Linux installer
+Exec=darth-installer
+Icon=system-software-install
+Terminal=false
+Categories=System;Settings;
+StartupNotify=true
