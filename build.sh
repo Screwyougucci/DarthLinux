@@ -51,6 +51,20 @@ network_link="$LIBVIRT_NETWORKS/autostart/default.xml"
 expected_network="$LIBVIRT_NETWORKS/default.xml"
 actual_network="$(realpath -m "$network_link")"
 [[ "$actual_network" == "$expected_network" ]] || die "Incorrect libvirt default network autostart link: $actual_network"
+# Start a PolicyKit authentication agent in XFCE sessions so pkexec
+# can display the administrator password prompt for Darth Store.
+POLKIT_AUTOSTART="$TMP_PROFILE/airootfs/etc/xdg/autostart"
+mkdir -p "$POLKIT_AUTOSTART"
+cat > "$POLKIT_AUTOSTART/polkit-gnome-authentication-agent-1.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=PolicyKit Authentication Agent
+Comment=Authentication agent for privileged desktop actions
+Exec=/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+OnlyShowIn=XFCE;
+NoDisplay=true
+StartupNotify=false
+EOF
 # Boot to the graphical desktop and show the LightDM login screen.
 mkdir -p "$TMP_PROFILE/airootfs/etc/systemd/system/graphical.target.wants"
 ln -sf /usr/lib/systemd/system/graphical.target "$TMP_PROFILE/airootfs/etc/systemd/system/default.target"
