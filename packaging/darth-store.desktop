@@ -1,8 +1,9 @@
 [Desktop Entry]
 Type=Application
 Name=Darth Store
-Comment=Install packages from configured Arch repositories
+Comment=Discover and install apps, AI tools, games and utilities
 Exec=darth-store
-Icon=system-software-install
+Icon=darth-store
 Terminal=false
 Categories=System;PackageManager;
+StartupNotify=true
