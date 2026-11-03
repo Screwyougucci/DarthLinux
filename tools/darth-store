@@ -110,7 +110,7 @@ class Store(Gtk.Application):
         root.append(search_row)
         self.entry = Gtk.Entry()
         self.entry.set_hexpand(True)
-        self.entry.set_placeholder_text("Search official Extra package names…")
+        self.entry.set_placeholder_text("Search thousands of apps, games, AI tools and utilities…")
         self.entry.connect("activate", self.search)
         search_row.append(self.entry)
         search_button = Gtk.Button(label="Search")
@@ -249,21 +249,21 @@ class Store(Gtk.Application):
             self.set_status("Wait for the current package operation to finish.")
             return
         self.busy = True
-        self.set_status("Searching the official Arch Extra repository…")
+        self.set_status("Searching all configured official repositories…")
 
         def worker():
             try:
-                result = subprocess.run(["pacman", "-Sl", "extra"], text=True,
+                result = subprocess.run(["pacman", "-Sl"], text=True,
                                         capture_output=True, timeout=120, check=False)
                 if result.returncode != 0:
-                    error = "Official Extra repository search failed.\n" + (result.stderr or result.stdout)[-8000:]
+                    error = "Official repository search failed.\n" + (result.stderr or result.stdout)[-8000:]
                     matches = []
                 else:
                     matches = []
                     for line in result.stdout.splitlines():
                         fields = line.split()
                         if len(fields) >= 3 and query.casefold() in fields[1].casefold():
-                            matches.append((fields[1], fields[2]))
+                            matches.append((fields[1], fields[2] + " · " + fields[0]))
                     error = ""
                 GLib.idle_add(self.display_search_results, query, matches[:150], error)
             except (OSError, subprocess.TimeoutExpired) as exc:
@@ -409,7 +409,7 @@ class Store(Gtk.Application):
                     self.set_status("pkexec is missing. Install the polkit package to enable authenticated installs.")
                     return
                 self.run_async(
-                    ["pkexec", "pacman", "-S", "--needed", "--", "extra/" + package],
+                    ["pkexec", "pacman", "-S", "--needed", "--", package],
                     f"Installation finished for {package}."
                 )
 
