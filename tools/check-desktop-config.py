@@ -49,6 +49,14 @@ for setting in ("theme-name=adw-gtk3-dark", "icon-theme-name=Adwaita", "backgrou
     if setting not in greeter_text:
         sys.exit(f"LightDM greeter is missing setting: {setting}")
 
+for gtk_settings in (
+    PROFILE / "etc/skel/.config/gtk-3.0/settings.ini",
+    PROFILE / "etc/skel/.config/gtk-4.0/settings.ini",
+):
+    settings_text = gtk_settings.read_text(encoding="utf-8")
+    if "gtk-theme-name=adw-gtk3-dark" not in settings_text or "gtk-application-prefer-dark-theme=true" not in settings_text:
+        sys.exit(f"GTK theme defaults are incomplete in {gtk_settings.relative_to(ROOT)}")
+
 terminal = PROFILE / "etc/skel/.config/xfce4/terminal/terminalrc"
 terminal_text = terminal.read_text(encoding="utf-8")
 for setting in ("ColorBackground=#0b0d12", "ColorForeground=#edf0f5", "ColorCursor=#c51d38"):
