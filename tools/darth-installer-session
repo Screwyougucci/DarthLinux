@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -uo pipefail
+VERSION="$(cat /etc/darth-linux-release 2>/dev/null || printf '0.5')"
+clear
+printf '\033[1;31m'
+cat <<'BANNER'
+██████╗  █████╗ ██████╗ ████████╗██╗  ██╗
+██╔══██╗██╔══██╗██╔══██╗╚══██╔══╝██║  ██║
+██║  ██║███████║██████╔╝   ██║   ███████║
+██║  ██║██╔══██║██╔══██╗   ██║   ██╔══██║
+██████╔╝██║  ██║██║  ██║   ██║   ██║  ██║
+╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
+BANNER
+printf '\033[0m'
+printf 'DARTH LINUX %s  //  SYSTEM INSTALLER\n' "$VERSION"
+printf 'The installer engine is Archinstall; Darth Linux keeps Arch underneath.\n\n'
+printf 'Review the target disk, partition layout, bootloader and encryption settings carefully.\n'
+printf 'Selecting a disk can erase its data. Back up anything important first.\n\n'
+read -r -p 'Press Enter to launch the installer, or Ctrl+C to cancel... '
+if [[ $EUID -eq 0 ]]; then
+  archinstall
+else
+  sudo archinstall
+fi
+status=$?
+printf '\nDarth Installer finished with exit code %s.\n' "$status"
+read -r -p 'Press Enter to close this window... ' _
+exit "$status"
