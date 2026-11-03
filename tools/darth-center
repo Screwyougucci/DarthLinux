@@ -43,7 +43,7 @@ def main():
         print(f" CPU activity: {cpu()}    Memory: {memory()}")
         print(f" Root disk: {disk.used//(1024**3)} GiB used / {disk.total//(1024**3)} GiB")
         print("\n--- DEFENSE STATUS ---")
-        print(f" Firewall (nftables): {command(['systemctl','is-active','nftables'])}")
+        print(f" Firewall service (nftables): {command(['systemctl','is-active','nftables'])}")
         print(f" ClamAV daemon:       {command(['systemctl','is-active','clamav-daemon'])}")
         print(f" Signature updater:   {command(['systemctl','is-active','clamav-freshclam'])}")
         print(f" AV definitions:      {clam_db_time()}")
