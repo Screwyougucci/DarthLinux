@@ -46,7 +46,7 @@ jobs:
                 tools/darth-control-center tools/darth-driver-manager \
                 tools/darth-hwcheck tools/darth-privacy tools/darth-proxy \
                 tools/darth-recovery tools/darth-scope-scan tools/darth-sentinel \
-                tools/darth-settings tools/darth-store tools/darth-watchtower
+                tools/darth-settings tools/darth-store tools/darth-watchtower tools/darth-notes
               for f in tools/darth-av-scan tools/darth-guardian tools/darth-lockdown tools/darth-redlab; do bash -n "$f"; done
               bash -n build.sh scripts/install-custom-tools.sh scripts/install-security-tools.sh
               python tools/darth-hwcheck --self-test
