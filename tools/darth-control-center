@@ -107,7 +107,7 @@ class ControlCenter(Gtk.Application):
         launch("VPN Connections", ["nm-connection-editor"], "Import and manage OpenVPN / WireGuard", 1, 0)
         launch("Network Monitor", ["xfce4-terminal", "--command", "btop"], "CPU, memory, processes and network", 0, 1)
         launch("Network Diagnostics", ["xfce4-terminal", "--command", "bash -lc 'ip -brief address; echo; ip route; exec bash'"], "Inspect local interfaces and routes", 1, 1)
-        launch("Notepad", ["mousepad"], "Write notes and edit text files", 0, 2)
+        launch("Darth Notes", ["darth-notes"], "Lightweight Notepad-style plain-text editor", 0, 2)
         launch("Antivirus", ["clamui"], "Open the ClamAV graphical scanner", 1, 2)
         launch("Security Dashboard", ["xfce4-terminal", "--command", "darth-center"], "Firewall, system and AV status", 0, 3)
         launch("Authorized Scope Scan", ["xfce4-terminal", "--hold", "--command", "darth-scope-scan"], "Private lab range only; asks for scope", 1, 3)
