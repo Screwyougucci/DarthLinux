@@ -110,8 +110,18 @@ class DarthSettings(Gtk.Application):
         volume.set_draw_value(True); volume.set_value(50); a.append(volume)
         muted = {"value": False, "updating": False}
         volume_pending = {"source": 0}
+        volume.set_sensitive(False)
         mute = Gtk.Button(label="Mute")
+        mute.set_sensitive(False)
+        def set_no_output():
+            vol_label.set_text("No default audio output detected")
+            volume.set_sensitive(False)
+            mute.set_sensitive(False)
+            return False
         def apply_volume(value, is_muted):
+            vol_label.set_text("OUTPUT VOLUME")
+            volume.set_sensitive(True)
+            mute.set_sensitive(True)
             muted["updating"] = True
             volume.set_value(min(150, max(0, value)))
             muted["updating"] = False
@@ -131,6 +141,8 @@ class DarthSettings(Gtk.Application):
                         pass
                 if value is not None:
                     GLib.idle_add(apply_volume, value, is_muted)
+                else:
+                    GLib.idle_add(set_no_output)
             threading.Thread(target=worker, daemon=True).start()
         def apply_volume_change(value):
             volume_pending["source"] = 0
