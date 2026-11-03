@@ -45,7 +45,7 @@ if not wallpaper.is_file():
 
 greeter = PROFILE / "etc/lightdm/lightdm-gtk-greeter.conf"
 greeter_text = greeter.read_text(encoding="utf-8")
-for setting in ("theme-name=adw-gtk3-dark", "icon-theme-name=Adwaita", "background=#0b0d12"):
+for setting in ("theme-name=adw-gtk3-dark", "icon-theme-name=Adwaita", "background=/usr/share/backgrounds/darth-linux/wallpaper.svg"):
     if setting not in greeter_text:
         sys.exit(f"LightDM greeter is missing setting: {setting}")
 
