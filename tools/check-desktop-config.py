@@ -27,6 +27,18 @@ for path in xml_files + svg_files:
     except ET.ParseError as exc:
         sys.exit(f"Invalid XML in {path.relative_to(ROOT)}: {exc}")
 
+boot_splash = ROOT / "profiles/darth/boot/splash.svg"
+if not boot_splash.is_file():
+    sys.exit("Darth boot splash SVG is missing.")
+try:
+    ET.parse(boot_splash)
+except ET.ParseError as exc:
+    sys.exit(f"Invalid Darth boot splash SVG: {exc}")
+build_script = (ROOT / "build.sh").read_text(encoding="utf-8")
+for token in ("rsvg-convert", "MENU BACKGROUND splash.png", "Darth Linux Live System"):
+    if token not in build_script:
+        sys.exit(f"Boot branding regression: build.sh is missing {token}")
+
 wallpaper = PROFILE / "usr/share/backgrounds/darth-linux/wallpaper.svg"
 if not wallpaper.is_file():
     sys.exit("Darth desktop wallpaper is missing.")
