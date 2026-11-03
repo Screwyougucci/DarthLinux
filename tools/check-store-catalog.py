@@ -41,7 +41,7 @@ if len(packages) != len(set(packages)):
     sys.exit("Duplicate package names found in the Store catalog.")
 
 flatpak_ids = [entry[1] for entry in catalogs["FLATPAK_CATALOG"]]
-valid_id = re.compile(r"^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+){2,}$")
+valid_id = re.compile(r"^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){2,}$")
 invalid = sorted(app_id for app_id in flatpak_ids if not valid_id.fullmatch(app_id))
 if invalid:
     sys.exit("Invalid Flatpak application IDs: " + ", ".join(invalid))
