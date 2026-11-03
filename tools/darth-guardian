@@ -16,13 +16,17 @@ action="${1:-status}"
 case "$action" in
   status)
     if nft list table inet darth_filter >/dev/null 2>&1; then
-      echo "Darth firewall: active"
+      echo "Darth firewall: active (ruleset loaded)"
+    elif [[ $EUID -ne 0 ]]; then
+      echo "Darth firewall: unknown (permission denied; run 'sudo darth-guardian status' to inspect the ruleset)"
     else
       echo "Darth firewall: not loaded"
     fi
+    printf "nftables service: "
     systemctl is-active nftables || true
     ;;
   rules)
+    [[ $EUID -eq 0 ]] || { echo "Run with sudo to inspect firewall rules." >&2; exit 1; }
     nft list table inet darth_filter
     ;;
   enable)
