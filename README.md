@@ -2,7 +2,7 @@
 
 **A lightweight, Arch Linux-based desktop distribution with a Sith-inspired identity and security-first defaults.**
 
-> **Project status: Darth Linux 0.5 preview.** The repository now builds a versioned `darth-linux-0.5` ISO. The current 0.5 image is experimental until the latest Actions build passes and the ISO is boot-tested in UEFI, BIOS, and a VM. It is not yet a stable release.
+> **Project status: Darth Linux 0.5 preview.** The repository is configured to build a versioned `darth-linux-0.5` ISO. The current 0.5 image is experimental until the latest Actions build passes and the ISO is boot-tested in UEFI, BIOS, and a VM. It is not yet a stable release.
 
 ## Goals
 - Run well on older laptops and low-resource computers.
@@ -23,7 +23,7 @@ Near-black graphite, crimson accents, and restrained tactical details. Artwork i
 Requires an updated Arch Linux host or properly configured Arch VM, root privileges, internet, archiso, git, and several GB of free disk space.
 
 ```bash
-sudo pacman -Syu --needed git
+sudo pacman -Syu --needed archiso git librsvg
 git clone https://github.com/Screwyougucci/DarthLinux.git
 cd DarthLinux
 sudo bash build.sh
