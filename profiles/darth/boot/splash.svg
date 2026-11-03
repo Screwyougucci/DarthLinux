@@ -16,7 +16,7 @@
  <path d="M-112-20H112M0-145V138" stroke-width="3" opacity=".8"/>
 </g>
 <g font-family="DejaVu Sans,Arial,sans-serif">
- <text x="52" y="170" fill="#aab0bb" font-size="15" letter-spacing="5">ARCH-BASED • DARTH BUILT</text>
+ <text x="52" y="170" fill="#aab0bb" font-size="15" letter-spacing="5">SECURITY-FOCUSED • DARTH BUILT</text>
  <text x="48" y="238" fill="#f4f4f6" font-size="43" font-weight="bold" letter-spacing="1">DARTH LINUX</text>
  <rect x="52" y="260" width="215" height="4" rx="2" fill="#c51d38"/>
  <text x="52" y="302" fill="#b7bbc5" font-size="14" letter-spacing="2">CONTROL YOUR SYSTEM.</text>
