@@ -1,40 +1,209 @@
 #!/usr/bin/env python3
-"""Darth Store: minimal GUI for official configured pacman repositories."""
+"""Darth Store: curated open-source apps plus official Arch repository search."""
+import re
 import subprocess
+import threading
+
 import gi
-gi.require_version("Gtk","4.0")
-from gi.repository import Gtk,Gio
-class App(Gtk.Application):
- def __init__(self):super().__init__(application_id="org.darthlinux.Store",flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
- def do_activate(self):
-  w=Gtk.ApplicationWindow(application=self);w.set_title("DARTH // STORE");w.set_default_size(760,580)
-  root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=10);root.set_margin_top(18);root.set_margin_bottom(18);root.set_margin_start(20);root.set_margin_end(20);w.set_child(root)
-  h=Gtk.Label(label="DARTH STORE");h.add_css_class("title-1");h.set_xalign(0);root.append(h)
-  root.append(Gtk.Label(label="Searches and installs from your configured pacman repositories only. No community scripts or silent installs."))
-  entry=Gtk.Entry();entry.set_placeholder_text("Package name (letters, numbers, . _ + -)");root.append(entry)
-  output=Gtk.TextView();output.set_editable(False);output.set_monospace(True);scroll=Gtk.ScrolledWindow();scroll.set_vexpand(True);scroll.set_child(output);root.append(scroll)
-  def show(s):output.get_buffer().set_text(s)
-  def valid():
-   s=entry.get_text().strip()
-   return s if s and all(c.isalnum() or c in "._+-" for c in s) else None
-  def search(*_):
-   s=valid()
-   if not s:show("Enter a valid package name.");return
-   p=subprocess.run(["pacman","-Ss",s],text=True,capture_output=True);show(p.stdout or p.stderr or "No matches.")
-  def install(*_):
-   s=valid()
-   if not s:show("Enter a valid package name.");return
-   d=Gtk.MessageDialog(transient_for=w,modal=True,message_type=Gtk.MessageType.WARNING,buttons=Gtk.ButtonsType.YES_NO,text=f"Install {s}?")
-   d.set_secondary_text("This opens the system package manager with administrator authentication. Review every package and dependency before confirming.")
-   def answer(dialog,response):
-    dialog.destroy()
-    if response==Gtk.ResponseType.YES:
-     try:subprocess.Popen(["pkexec","pacman","-S","--needed","--",s])
-     except OSError as e:show(str(e))
-   d.connect("response",answer);d.present()
-  row=Gtk.Box(spacing=8);root.append(row)
-  b=Gtk.Button(label="Search");b.connect("clicked",search);row.append(b)
-  b=Gtk.Button(label="Install selected package…");b.connect("clicked",install);row.append(b)
-  b=Gtk.Button(label="Installed packages");b.connect("clicked",lambda *_:show(subprocess.run(["pacman","-Q"],text=True,capture_output=True).stdout));row.append(b)
-  w.present()
-App().run(None)
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gtk, Gio, GLib
+
+# Only official Arch repository package names are listed here. The Store never
+# runs AUR helpers, downloaded install scripts, or shell commands.
+CATALOG = [
+    ("Graphics", "GIMP", "gimp", "Image editing and photo retouching"),
+    ("Graphics", "Inkscape", "inkscape", "Vector graphics and illustration"),
+    ("Graphics", "Krita", "krita", "Digital painting and illustration"),
+    ("3D & Video", "Blender", "blender", "3D modeling, animation and rendering"),
+    ("3D & Video", "OBS Studio", "obs-studio", "Screen recording and live streaming"),
+    ("3D & Video", "Kdenlive", "kdenlive", "Non-linear video editing"),
+    ("Audio", "Audacity", "audacity", "Multi-track audio recording and editing"),
+    ("Office", "LibreOffice", "libreoffice-fresh", "Open-source office suite"),
+    ("Internet", "Chromium", "chromium", "Open-source web browser"),
+    ("Internet", "Thunderbird", "thunderbird", "Email, calendar and contacts"),
+    ("Internet", "qBittorrent", "qbittorrent", "Open-source BitTorrent client"),
+    ("Media", "VLC", "vlc", "Play a wide range of audio and video formats"),
+    ("Media", "HandBrake", "handbrake", "Convert video files"),
+    ("Privacy", "KeePassXC", "keepassxc", "Local password manager"),
+    ("Files", "FileZilla", "filezilla", "FTP, FTPS and SFTP client"),
+    ("Files", "Calibre", "calibre", "E-book library manager"),
+    ("Sync", "Syncthing", "syncthing", "Continuous file synchronization"),
+]
+
+PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9@._+:-]{0,127}$")
+
+
+class Store(Gtk.Application):
+    def __init__(self):
+        super().__init__(application_id="org.darthlinux.Store",
+                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+        self.busy = False
+        self.selected_package = None
+
+    def do_activate(self):
+        win = Gtk.ApplicationWindow(application=self)
+        win.set_title("DARTH // STORE")
+        win.set_default_size(900, 680)
+        self.win = win
+
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        root.set_margin_top(18)
+        root.set_margin_bottom(18)
+        root.set_margin_start(20)
+        root.set_margin_end(20)
+        win.set_child(root)
+
+        title = Gtk.Label(label="DARTH STORE")
+        title.add_css_class("title-1")
+        title.set_xalign(0)
+        root.append(title)
+        intro = Gtk.Label(
+            label="Open-source applications from configured official Arch repositories. "
+                  "No AUR packages, third-party install scripts, or silent installs."
+        )
+        intro.set_xalign(0)
+        intro.set_wrap(True)
+        root.append(intro)
+
+        search_row = Gtk.Box(spacing=8)
+        root.append(search_row)
+        self.entry = Gtk.Entry()
+        self.entry.set_hexpand(True)
+        self.entry.set_placeholder_text("Search official repository packages…")
+        self.entry.connect("activate", self.search)
+        search_row.append(self.entry)
+        search_button = Gtk.Button(label="Search")
+        search_button.connect("clicked", self.search)
+        search_row.append(search_button)
+        installed_button = Gtk.Button(label="Installed packages")
+        installed_button.connect("clicked", self.installed)
+        search_row.append(installed_button)
+
+        self.status = Gtk.Label(label="Choose an app below or search the official repositories.")
+        self.status.set_xalign(0)
+        self.status.set_wrap(True)
+        root.append(self.status)
+
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_vexpand(True)
+        root.append(scroll)
+        self.results = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        scroll.set_child(self.results)
+
+        self.show_catalog()
+        win.present()
+
+    def set_status(self, message):
+        self.status.set_text(message)
+
+    def clear_results(self):
+        child = self.results.get_first_child()
+        while child:
+            nxt = child.get_next_sibling()
+            self.results.remove(child)
+            child = nxt
+
+    def show_catalog(self):
+        self.clear_results()
+        current = None
+        for category, name, package, description in CATALOG:
+            if category != current:
+                heading = Gtk.Label(label=category.upper())
+                heading.set_xalign(0)
+                heading.add_css_class("heading")
+                self.results.append(heading)
+                current = category
+            row = Gtk.Box(spacing=10)
+            row.set_margin_top(3)
+            row.set_margin_bottom(3)
+            details = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            details.set_hexpand(True)
+            label = Gtk.Label(label=name)
+            label.set_xalign(0)
+            label.add_css_class("heading")
+            details.append(label)
+            subtitle = Gtk.Label(label=f"{description}  ·  {package}")
+            subtitle.set_xalign(0)
+            subtitle.set_wrap(True)
+            subtitle.add_css_class("dim-label")
+            details.append(subtitle)
+            row.append(details)
+            button = Gtk.Button(label="Install…")
+            button.connect("clicked", lambda _b, p=package, n=name: self.confirm_install(p, n))
+            row.append(button)
+            self.results.append(row)
+
+    def run_async(self, args, success_message):
+        if self.busy:
+            self.set_status("Another package operation is already running. Please wait.")
+            return
+        self.busy = True
+        self.set_status("Working… package operations can take a few minutes.")
+
+        def worker():
+            try:
+                result = subprocess.run(args, text=True, capture_output=True,
+                                        timeout=1800, check=False)
+                output = (result.stdout or "") + (result.stderr or "")
+                if result.returncode == 0:
+                    message = success_message + ("\n" + output[-12000:] if output.strip() else "")
+                else:
+                    message = f"Command failed (exit {result.returncode}).\n{output[-12000:]}"
+            except subprocess.TimeoutExpired:
+                message = "Package operation timed out after 30 minutes."
+            except OSError as exc:
+                message = f"Could not start package manager: {exc}"
+            GLib.idle_add(self.finish_operation, message)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def finish_operation(self, message):
+        self.busy = False
+        self.set_status(message)
+        return False
+
+    def search(self, *_):
+        query = self.entry.get_text().strip()
+        if not query or len(query) > 128 or not PACKAGE_RE.fullmatch(query):
+            self.set_status("Enter a package name or search term (letters, numbers and . _ + : -).")
+            return
+        self.run_async(["pacman", "-Ss", query], f"Repository search: {query}")
+
+    def installed(self, *_):
+        self.run_async(["pacman", "-Q"], "Installed packages")
+
+    def confirm_install(self, package, display_name=None):
+        if self.busy:
+            self.set_status("Wait for the current package operation to finish.")
+            return
+        dialog = Gtk.MessageDialog(
+            transient_for=self.win, modal=True, message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text=f"Install {display_name or package}?"
+        )
+        dialog.set_secondary_text(
+            f"Package: {package}\n\nThe system package manager will show the complete "
+            "transaction and dependencies. Review them before approving authentication."
+        )
+
+        def answer(dlg, response):
+            dlg.destroy()
+            if response == Gtk.ResponseType.YES:
+                if not shutil_which("pkexec"):
+                    self.set_status("pkexec is missing. Install the polkit package to enable authenticated installs.")
+                    return
+                self.run_async(
+                    ["pkexec", "pacman", "-S", "--needed", "--", package],
+                    f"Installation finished for {package}."
+                )
+
+        dialog.connect("response", answer)
+        dialog.present()
+
+
+def shutil_which(name):
+    import shutil
+    return shutil.which(name)
+
+
+Store().run(None)
