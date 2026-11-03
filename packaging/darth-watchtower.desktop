@@ -3,6 +3,6 @@ Type=Application
 Name=Darth Watchtower
 Comment=Local system and security dashboard
 Exec=darth-watchtower
-Icon=utilities-system-monitor
+Icon=darth-linux
 Terminal=false
 Categories=System;Monitor;
