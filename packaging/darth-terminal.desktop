@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Darth Terminal
+Comment=Open the Darth command terminal
+Exec=xfce4-terminal --title="DARTH // TERMINAL"
+Icon=utilities-terminal
+Terminal=false
+Categories=System;
+StartupNotify=true
