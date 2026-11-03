@@ -23,7 +23,7 @@ Near-black graphite, crimson accents, and restrained tactical details. Artwork i
 Requires an updated Arch Linux host or properly configured Arch VM, root privileges, internet, archiso, git, and several GB of free disk space.
 
 ```bash
-sudo pacman -Syu --needed archiso git librsvg
+sudo pacman -Syu --needed archiso git librsvg python nftables desktop-file-utils
 git clone https://github.com/Screwyougucci/DarthLinux.git
 cd DarthLinux
 sudo bash build.sh
