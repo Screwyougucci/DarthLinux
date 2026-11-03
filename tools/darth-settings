@@ -109,6 +109,7 @@ class DarthSettings(Gtk.Application):
         volume = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 150, 1)
         volume.set_draw_value(True); volume.set_value(50); a.append(volume)
         muted = {"value": False, "updating": False}
+        volume_pending = {"source": 0}
         mute = Gtk.Button(label="Mute")
         def apply_volume(value, is_muted):
             muted["updating"] = True
@@ -131,15 +132,23 @@ class DarthSettings(Gtk.Application):
                 if value is not None:
                     GLib.idle_add(apply_volume, value, is_muted)
             threading.Thread(target=worker, daemon=True).start()
-        def set_volume(scale):
-            if muted["updating"]:
-                return
-            value = f"{scale.get_value()/100:.2f}"
+        def apply_volume_change(value):
+            volume_pending["source"] = 0
             try:
                 subprocess.Popen(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", value],
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             except OSError:
                 pass
+            return False
+        def set_volume(scale):
+            if muted["updating"]:
+                return
+            if volume_pending["source"]:
+                GLib.source_remove(volume_pending["source"])
+            value = f"{scale.get_value()/100:.2f}"
+            volume_pending["source"] = GLib.timeout_add(
+                160, apply_volume_change, value
+            )
         def toggle_mute(*_):
             try:
                 subprocess.Popen(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"],
@@ -167,8 +176,8 @@ class DarthSettings(Gtk.Application):
         row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         bright.append(row)
         down = Gtk.Button(label="− 5%"); up = Gtk.Button(label="+ 5%")
-        down.connect("clicked", lambda *_: command(["brightnessctl", "set", "5%-"]))
-        up.connect("clicked", lambda *_: command(["brightnessctl", "set", "5%+"]))
+        down.connect("clicked", lambda *_: launch(["brightnessctl", "set", "5%-"]))
+        up.connect("clicked", lambda *_: launch(["brightnessctl", "set", "5%+"]))
         row.append(down); row.append(up)
         action(bright, "Show brightness devices", ["xfce4-terminal", "--command", "bash -lc 'brightnessctl; exec bash'"])
 
