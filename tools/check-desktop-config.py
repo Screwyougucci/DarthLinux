@@ -86,6 +86,18 @@ installer_session = ROOT / "tools/darth-installer-session"
 for path in (ROOT / "tools/darth-terminal", ROOT / "tools/darth-files", installer_session):
     if not path.is_file():
         sys.exit(f"Missing Darth-branded launcher: {path.relative_to(ROOT)}")
+post_install = (ROOT / "scripts/install-custom-tools.sh").read_text(encoding="utf-8")
+for token in ("pacman -Syu", "pacman-contrib", "darth-installer-session",
+              "darth-settings.desktop", "darth-linux.svg", "nftables.conf",
+              "systemctl set-default graphical.target"):
+    if token not in post_install:
+        sys.exit(f"Post-install deployment regression: missing {token}")
+installer_session_source = installer_session.read_text(encoding="utf-8")
+for token in ("git clone https://github.com/Screwyougucci/DarthLinux.git",
+              "sudo bash scripts/install-custom-tools.sh", "Archinstall"):
+    if token not in installer_session_source:
+        sys.exit(f"Installer handoff regression: missing {token}")
+
 for token in ("darth-installer-session", "DARTH // INSTALLER"):
     if token not in installer.read_text(encoding="utf-8"):
         sys.exit(f"Installer branding regression: missing {token}")
