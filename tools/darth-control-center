@@ -12,6 +12,18 @@ def run(args):
     except (OSError, subprocess.TimeoutExpired) as exc:
         return str(exc)
 
+def firewall_rules_status():
+    try:
+        p = subprocess.run(["nft", "list", "table", "inet", "darth_filter"],
+                           text=True, capture_output=True, timeout=3, check=False)
+        if p.returncode == 0:
+            return "Darth ruleset loaded"
+        if "Operation not permitted" in p.stderr:
+            return "Unknown (administrator permission required)"
+        return "Darth ruleset not loaded"
+    except (OSError, subprocess.TimeoutExpired):
+        return "Unknown (nft unavailable)"
+
 class ControlCenter(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="org.darthlinux.ControlCenter",
@@ -68,7 +80,8 @@ class ControlCenter(Gtk.Application):
             vpn_lines = [line for line in active.splitlines() if "vpn" in line.lower() or "wireguard" in line.lower()]
             vpn = "\n".join(vpn_lines) if vpn_lines else "No VPN connection currently active"
             firewall = run(["systemctl", "is-active", "nftables"])
-            status.set_text("NETWORK / VPN STATUS\n" + vpn + "\n\nFirewall service (nftables): " + firewall)
+            rules = firewall_rules_status()
+            status.set_text("NETWORK / VPN STATUS\n" + vpn + "\n\nFirewall service (nftables): " + firewall + "\nDarth firewall rules: " + rules)
         refresh()
 
         grid = Gtk.Grid(column_spacing=10, row_spacing=10)
