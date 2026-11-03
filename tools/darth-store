@@ -56,6 +56,12 @@ FLATPAK_CATALOG = [
     ("KeePassXC", "org.keepassxc.KeePassXC"),
     ("qBittorrent", "org.qbittorrent.qBittorrent"),
     ("Evince PDF Reader", "org.gnome.Evince"),
+    ("Thunderbird", "org.mozilla.Thunderbird"),
+    ("Kate Editor", "org.kde.kate"),
+    ("Okular PDF Reader", "org.kde.okular"),
+    ("Flatseal Permissions Manager", "com.github.tchx84.Flatseal"),
+    ("Easy Effects Audio", "com.github.wwmm.easyeffects"),
+    ("LocalSend File Transfer", "org.localsend.localsend_app"),
 ]
 
 PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9@._+:-]{0,127}$")
@@ -97,7 +103,7 @@ class Store(Gtk.Application):
         root.append(search_row)
         self.entry = Gtk.Entry()
         self.entry.set_hexpand(True)
-        self.entry.set_placeholder_text("Search official repository packages…")
+        self.entry.set_placeholder_text("Search official Extra package names…")
         self.entry.connect("activate", self.search)
         search_row.append(self.entry)
         search_button = Gtk.Button(label="Search")
@@ -258,7 +264,7 @@ class Store(Gtk.Application):
                         raise RuntimeError((install.stderr or install.stdout or "Flatpak installation was cancelled.")[-8000:])
                 add = subprocess.run(
                     ["flatpak", "remote-add", "--user", "--if-not-exists", "flathub",
-                     "https://flathub.org/repo/flathub.flatpakrepo"],
+                     "https://dl.flathub.org/repo/flathub.flatpakrepo"],
                     text=True, capture_output=True, timeout=180, check=False
                 )
                 if add.returncode != 0:
