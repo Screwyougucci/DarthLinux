@@ -5,10 +5,10 @@ PROFILE_DIR="$ROOT_DIR/profiles/darth"
 WORK_DIR="$ROOT_DIR/work"
 OUT_DIR="$ROOT_DIR/out"
 VERSION="$(tr -d "[:space:]" < "$ROOT_DIR/VERSION")"
-[[ "$VERSION" =~ ^[0-9]+\.[0-9]+$ ]] || die "VERSION must be in major.minor format (for example 0.5)"
 BASE_PROFILE="/usr/share/archiso/configs/releng"
 
 die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
+[[ "$VERSION" =~ ^[0-9]+\.[0-9]+$ ]] || die "VERSION must be in major.minor format (for example 0.5)"
 [[ $EUID -eq 0 ]] || die "Run with sudo: sudo bash ./build.sh"
 command -v mkarchiso >/dev/null 2>&1 || die "Install archiso: sudo pacman -S archiso"
 [[ -d "$BASE_PROFILE" ]] || die "Official Archiso releng profile not found at $BASE_PROFILE"
@@ -94,8 +94,8 @@ ln -sf /usr/lib/systemd/system/lightdm.service "$TMP_PROFILE/airootfs/etc/system
 ln -sf /usr/lib/systemd/system/lightdm.service "$TMP_PROFILE/airootfs/etc/systemd/system/graphical.target.wants/lightdm.service"
 # Copy the project desktop defaults into the live user's skeleton.
 mkdir -p "$TMP_PROFILE/airootfs/etc/skel/Desktop"
-printf "Darth Linux %s\\n" "$VERSION" > "$TMP_PROFILE/airootfs/etc/darth-linux-release"
-printf "Darth Linux %s // Live System\\nAuthorized local use only.\\n\\n" "$VERSION" > "$TMP_PROFILE/airootfs/etc/issue"
+printf "Darth Linux %s\n" "$VERSION" > "$TMP_PROFILE/airootfs/etc/darth-linux-release"
+printf "Darth Linux %s // Live System\nAuthorized local use only.\n\n" "$VERSION" > "$TMP_PROFILE/airootfs/etc/issue"
 find "$TMP_PROFILE/airootfs/etc/skel" -type f -name '*.desktop' -exec chmod 755 {} +
 sed -i 's/^iso_label=.*/iso_label="DARTH_0_5"/' "$TMP_PROFILE/profiledef.sh"
 sed -i "s/^iso_name=.*/iso_name=\\"darth-linux-${VERSION}\\"/" "$TMP_PROFILE/profiledef.sh"
