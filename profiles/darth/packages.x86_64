@@ -1,6 +1,7 @@
 # Lightweight XFCE desktop and live-session essentials
 adw-gtk-theme
 adwaita-icon-theme
+hicolor-icon-theme
 librsvg
 noto-fonts
 base
