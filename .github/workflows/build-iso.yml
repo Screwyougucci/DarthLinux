@@ -40,17 +40,19 @@ jobs:
             -w /src \
             archlinux:latest \
             bash -euo pipefail -c '
-              pacman -Syu --noconfirm archiso git python nftables
+              pacman -Syu --noconfirm archiso git python nftables desktop-file-utils
               python -m py_compile \
                 tools/darth-ai-manager tools/darth-audit tools/darth-center \
                 tools/darth-control-center tools/darth-driver-manager \
                 tools/darth-hwcheck tools/darth-privacy tools/darth-proxy \
                 tools/darth-recovery tools/darth-scope-scan tools/darth-sentinel \
-                tools/darth-settings tools/darth-store tools/darth-watchtower tools/darth-notes
-              for f in tools/darth-av-scan tools/darth-guardian tools/darth-lockdown tools/darth-redlab; do bash -n "$f"; done
+                tools/darth-settings tools/darth-store tools/darth-watchtower tools/darth-notes tools/check-desktop-config.py
+              for f in tools/darth-av-scan tools/darth-guardian tools/darth-lockdown tools/darth-redlab tools/darth-installer; do bash -n "$f"; done
+              for f in packaging/*.desktop; do desktop-file-validate "$f"; done
               bash -n build.sh scripts/install-custom-tools.sh scripts/install-security-tools.sh
               python tools/darth-hwcheck --self-test
               python tools/check-store-catalog.py
+              python tools/check-desktop-config.py
               nft -c -f profiles/darth/airootfs/etc/nftables.conf
               bash ./build.sh
               test -n "$(find out -maxdepth 1 -type f -name "*.iso" -print -quit)"
