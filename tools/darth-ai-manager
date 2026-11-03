@@ -122,6 +122,20 @@ class AIManager(Gtk.Application):
         self.model_select.set_model(Gtk.StringList.new(labels))
         self.model_select.set_selected(0)
 
+    def do_shutdown(self):
+        for proc in (self.download_proc, self.server_proc):
+            if proc and proc.poll() is None:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait(timeout=2)
+        if getattr(self, "server_log_handle", None):
+            self.server_log_handle.close()
+            self.server_log_handle = None
+        Gtk.Application.do_shutdown(self)
+
     def download_model(self, *_):
         if self.download_proc and self.download_proc.poll() is None:
             self.status.set_text("A download is already running.")
