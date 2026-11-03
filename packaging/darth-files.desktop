@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Darth Files
+Comment=Browse files with the Darth desktop theme
+Exec=thunar
+Icon=system-file-manager
+Terminal=false
+Categories=System;
+StartupNotify=true
