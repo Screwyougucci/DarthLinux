@@ -1,8 +1,9 @@
 [Desktop Entry]
+Type=Application
 Name=Darth System Settings
-Comment=Configure audio, display, video, network and system controls
+Comment=Configure your Darth desktop, audio, display, network and system
 Exec=darth-settings
 Icon=preferences-system
 Terminal=false
-Type=Application
 Categories=Settings;System;
+StartupNotify=true
