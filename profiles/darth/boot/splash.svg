@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#090b10"/><stop offset="1" stop-color="#19151c"/></linearGradient>
+  <radialGradient id="glow"><stop stop-color="#c51d38" stop-opacity=".38"/><stop offset="1" stop-color="#c51d38" stop-opacity="0"/></radialGradient>
+  <linearGradient id="blade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff526c"/><stop offset="1" stop-color="#8d1028"/></linearGradient>
+</defs>
+<rect width="640" height="480" fill="url(#bg)"/>
+<circle cx="470" cy="220" r="220" fill="url(#glow)"/>
+<g opacity=".25" stroke="#59606d" stroke-width="1">
+ <path d="M0 90H640M0 390H640M90 0V480M550 0V480"/>
+ <path d="M0 360 260 100M390 480 640 230"/>
+</g>
+<g transform="translate(470 215)" fill="none" stroke="url(#blade)" stroke-linejoin="round">
+ <path d="M0-145 92-90 75 60 0 138-75 60-92-90Z" stroke-width="8"/>
+ <path d="M0-103 54-70 44 44 0 92-44 44-54-70Z" stroke-width="4"/>
+ <path d="M-112-20H112M0-145V138" stroke-width="3" opacity=".8"/>
+</g>
+<g font-family="DejaVu Sans,Arial,sans-serif">
+ <text x="52" y="170" fill="#aab0bb" font-size="15" letter-spacing="5">ARCH-BASED • DARTH BUILT</text>
+ <text x="48" y="238" fill="#f4f4f6" font-size="43" font-weight="bold" letter-spacing="1">DARTH LINUX</text>
+ <rect x="52" y="260" width="215" height="4" rx="2" fill="#c51d38"/>
+ <text x="52" y="302" fill="#b7bbc5" font-size="14" letter-spacing="2">CONTROL YOUR SYSTEM.</text>
+ <text x="52" y="326" fill="#b7bbc5" font-size="14" letter-spacing="2">PROTECT YOUR WORK.</text>
+ <text x="52" y="444" fill="#6f7682" font-size="10" letter-spacing="2">DARTH LINUX LIVE ENVIRONMENT</text>
+</g>
+</svg>
