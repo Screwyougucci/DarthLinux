@@ -28,4 +28,4 @@ The Audio, Display, Video, Network, Security, and System settings hub is launche
 
 ## Live image vs installed system
 
-The LightDM and desktop defaults are part of the Archiso image. The live image still needs a build and boot test to verify the display-manager login flow, desktop session, dock, tray applets, and package availability. When installing to disk, use archinstall and select a normal user account; verify the installed boot target and display manager after installation.
+The LightDM and desktop defaults are part of the Archiso image. The live image still needs a build and boot test to verify the display-manager login flow, desktop session, dock, tray applets, and package availability. The Darth Installer launches upstream Archinstall. After installing to disk and rebooting, connect to the internet, clone the project repository, and run `sudo bash scripts/install-custom-tools.sh` to install the full Darth package set, tools, theme, icon, firewall defaults, and Update Center. This post-install step is required; Archinstall itself installs the base Arch system and does not automatically copy the Darth project overlay.
