@@ -91,6 +91,8 @@ libvirt
 dnsmasq
 edk2-ovmf
 
+pacman-contrib
+
 # Authentication for graphical package installs in Darth Store
 polkit
 polkit-gnome
