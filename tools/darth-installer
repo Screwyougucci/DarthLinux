@@ -8,4 +8,4 @@ command -v darth-installer-session >/dev/null 2>&1 || {
   printf 'Darth Installer session is missing.\n' >&2
   exit 127
 }
-exec xfce4-terminal --title="DARTH // INSTALLER" --hold --command="darth-installer-session"
+exec xfce4-terminal --icon=darth-linux --title="DARTH // INSTALLER" --hold --command="darth-installer-session"
