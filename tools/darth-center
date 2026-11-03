@@ -15,6 +15,7 @@ def memory():
         for line in Path("/proc/meminfo").read_text().splitlines():
             k,v=line.split(":",1); data[k]=int(v.strip().split()[0])
         total=data.get("MemTotal",0); avail=data.get("MemAvailable",0)
+        if total <= 0:return "unavailable"
         return f"{(total-avail)/1024:.0f} MiB used / {total/1024:.0f} MiB total"
     except Exception: return "unavailable"
 
@@ -24,8 +25,17 @@ def cpu():
             vals=list(map(int,Path("/proc/stat").read_text().splitlines()[0].split()[1:]))
             return sum(vals[:8]), vals[3]+(vals[4] if len(vals)>4 else 0)
         t1,i1=sample(); time.sleep(.2); t2,i2=sample()
-        return f"{100*(1-(i2-i1)/max(1,t2-t1)):.1f}%"
+        usage=100*(1-(i2-i1)/max(1,t2-t1))
+        return f"{max(0.0,min(100.0,usage)):.1f}%"
     except Exception: return "unavailable"
+
+def firewall_rules_status():
+    try:
+        p=subprocess.run(["nft","list","table","inet","darth_filter"],text=True,capture_output=True,timeout=3,check=False)
+        if p.returncode==0:return "loaded"
+        if "Operation not permitted" in p.stderr:return "unknown (permission required)"
+        return "not loaded"
+    except (OSError,subprocess.TimeoutExpired):return "unavailable"
 
 def clam_db_time():
     db=Path("/var/lib/clamav")
@@ -44,6 +54,7 @@ def main():
         print(f" Root disk: {disk.used//(1024**3)} GiB used / {disk.total//(1024**3)} GiB")
         print("\n--- DEFENSE STATUS ---")
         print(f" Firewall service (nftables): {command(['systemctl','is-active','nftables'])}")
+        print(f" Darth firewall rules:   {firewall_rules_status()}")
         print(f" ClamAV daemon:       {command(['systemctl','is-active','clamav-daemon'])}")
         print(f" Signature updater:   {command(['systemctl','is-active','clamav-freshclam'])}")
         print(f" AV definitions:      {clam_db_time()}")
