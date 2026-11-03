@@ -35,7 +35,7 @@ done
 if [[ -d "$TMP_PROFILE/efiboot/loader/entries" ]]; then
   for entry in "$TMP_PROFILE"/efiboot/loader/entries/*.conf; do
     [[ -f "$entry" ]] || continue
-    sed -i 's/^title Arch Linux/title Darth Linux/' "$entry"
+    sed -i 's/Arch Linux/Darth Linux/g' "$entry"
   done
 fi
 
