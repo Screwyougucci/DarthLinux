@@ -6,5 +6,5 @@ Comment=Download Hugging Face GGUF models and run them locally
 Exec=darth-ai-manager
 Icon=applications-science
 Terminal=false
-Categories=System;Development;Science;
+Categories=Development;
 StartupNotify=true
