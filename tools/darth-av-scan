@@ -12,8 +12,17 @@ command -v clamscan >/dev/null 2>&1 || { echo "ClamAV is not installed." >&2; ex
 TARGET="$(realpath -- "$TARGET")"
 [[ -e "$TARGET" ]] || { echo "Target does not exist: $TARGET" >&2; exit 1; }
 echo "Checking ClamAV signature updater..."
-if systemctl is-active --quiet clamav-freshclam.service; then
-  echo "Automatic ClamAV updater is already running; leaving it to manage database updates."
+latest_db=0
+for db in /var/lib/clamav/*.cvd /var/lib/clamav/*.cld; do
+  [[ -f "$db" ]] || continue
+  db_mtime="$(stat -c %Y -- "$db" 2>/dev/null || echo 0)"
+  (( db_mtime > latest_db )) && latest_db="$db_mtime"
+done
+now="$(date +%s)"
+if (( latest_db > 0 && now - latest_db < 3600 )); then
+  echo "Signature database was updated within the last hour; skipping another CDN check."
+elif systemctl is-active --quiet clamav-freshclam.service || systemctl is-active --quiet clamav-freshclam-once.timer; then
+  echo "Automatic ClamAV updater is enabled; leaving database updates to systemd."
 elif [[ $EUID -eq 0 ]]; then
   freshclam || echo "Warning: signature update failed; using the installed database." >&2
 elif command -v sudo >/dev/null 2>&1; then
