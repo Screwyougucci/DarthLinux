@@ -7,6 +7,8 @@ on:
     paths:
       - "build.sh"
       - "VERSION"
+      - "README.md"
+      - "docs/**"
       - "profiles/**"
       - "tools/**"
       - "packaging/**"
