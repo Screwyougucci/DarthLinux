@@ -57,6 +57,7 @@ class ControlCenter(Gtk.Application):
             Gtk.StyleContext.add_provider_for_display(
                 display, css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         win = Gtk.ApplicationWindow(application=self)
+        win.set_icon_name("darth-linux")
         win.add_css_class("darth-window")
         release_file = Path("/etc/darth-linux-release")
         release = release_file.read_text(encoding="utf-8").strip() if release_file.exists() else "0.5"
