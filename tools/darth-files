@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+export GTK_THEME=adw-gtk3-dark
+exec thunar "$@"
