@@ -35,7 +35,7 @@ try:
 except ET.ParseError as exc:
     sys.exit(f"Invalid Darth boot splash SVG: {exc}")
 build_script = (ROOT / "build.sh").read_text(encoding="utf-8")
-for token in ("rsvg-convert", "MENU BACKGROUND splash.png", "Darth Linux Live System"):
+for token in ("rsvg-convert", "MENU BACKGROUND splash.png", "sed -i 's/Arch Linux/Darth Linux/g' \"$entry\"", "Darth Linux Live System"):
     if token not in build_script:
         sys.exit(f"Boot branding regression: build.sh is missing {token}")
 
