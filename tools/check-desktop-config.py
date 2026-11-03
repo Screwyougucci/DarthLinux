@@ -106,6 +106,18 @@ for reserved_icon in ("org.xfce.thunar.svg", "org.xfce.terminal.svg"):
     if (PROFILE / "usr/share/icons/hicolor/scalable/apps" / reserved_icon).exists():
         sys.exit(f"Do not shadow package-owned XFCE icon: {reserved_icon}")
 
+terminal_wrapper = (ROOT / "tools/darth-terminal").read_text(encoding="utf-8")
+files_wrapper = (ROOT / "tools/darth-files").read_text(encoding="utf-8")
+for token in ("--icon=darth-linux", "DARTH // TERMINAL"):
+    if token not in terminal_wrapper:
+        sys.exit(f"Darth Terminal branding regression: missing {token}")
+if "GTK_THEME=adw-gtk3-dark" not in files_wrapper or "exec thunar" not in files_wrapper:
+    sys.exit("Darth Files must launch Thunar with the Darth GTK theme.")
+for app_path in (ROOT / "tools/darth-settings", ROOT / "tools/darth-control-center"):
+    app_source = app_path.read_text(encoding="utf-8")
+    if 'set_icon_name("darth-linux")' not in app_source or "/etc/darth-linux-release" not in app_source:
+        sys.exit(f"Missing unified icon/version identity in {app_path.name}")
+
 brand_icon = PROFILE / "usr/share/icons/hicolor/scalable/apps/darth-linux.svg"
 if not brand_icon.is_file():
     sys.exit("Unified Darth application icon is missing.")
