@@ -175,7 +175,7 @@ class Notes(Gtk.Application):
             try:
                 path = Path(file.get_path())
                 text = path.read_text(encoding="utf-8")
-            except (OSError, UnicodeError, TypeError) as exc:
+            except (OSError, UnicodeError, TypeError, AttributeError) as exc:
                 self.show_error("Could not open file", str(exc))
                 chooser.destroy()
                 return
@@ -209,7 +209,7 @@ class Notes(Gtk.Application):
             try:
                 path = Path(file.get_path())
                 self.write_file(path)
-            except (OSError, TypeError) as exc:
+            except (OSError, TypeError, AttributeError) as exc:
                 self.after_save = None
                 self.show_error("Could not save file", str(exc))
         else:
