@@ -124,7 +124,16 @@ class Store(Gtk.Application):
         flathub_button.connect("clicked", self.enable_flathub)
         search_row.append(flathub_button)
 
-        self.status = Gtk.Label(label="Choose a featured app or search all official package repositories.")
+        self.category_row = Gtk.Box(spacing=6)
+        root.append(self.category_row)
+        self.category_buttons = {}
+        for category in ("All", "AI", "Games", "Productivity", "Creativity", "Entertainment", "Internet", "Utilities", "Developer"):
+            button = Gtk.Button(label=category)
+            button.connect("clicked", lambda _b, value=category: self.show_catalog(value))
+            self.category_row.append(button)
+            self.category_buttons[category] = button
+
+        self.status = Gtk.Label(label="Choose a category or search all official package repositories.")
         self.status.set_xalign(0)
         self.status.set_wrap(True)
         root.append(self.status)
@@ -148,10 +157,27 @@ class Store(Gtk.Application):
             self.results.remove(child)
             child = nxt
 
-    def show_catalog(self):
+    def show_catalog(self, selected="All"):
         self.clear_results()
+        self.active_category = selected
+        for category, button in self.category_buttons.items():
+            button.set_sensitive(category != selected)
+
+        native_groups = {
+            "AI": {"AI", "Developer"},
+            "Games": {"Games"},
+            "Productivity": {"Office", "Files", "Sync"},
+            "Creativity": {"Graphics", "3D & Video", "Audio"},
+            "Entertainment": {"Media", "Audio", "Games"},
+            "Internet": {"Internet", "Privacy"},
+            "Utilities": {"Files", "Privacy", "Sync"},
+            "Developer": {"Developer"},
+        }
         current = None
+        native_count = 0
         for category, name, package, description in CATALOG:
+            if selected != "All" and category not in native_groups.get(selected, set()):
+                continue
             if category != current:
                 heading = Gtk.Label(label=category.upper())
                 heading.set_xalign(0)
@@ -177,12 +203,41 @@ class Store(Gtk.Application):
             button.connect("clicked", lambda _b, p=package, n=name: self.confirm_install(p, n))
             row.append(button)
             self.results.append(row)
+            native_count += 1
 
-        heading = Gtk.Label(label="OPTIONAL FLATHUB APPS")
-        heading.set_xalign(0)
-        heading.add_css_class("heading")
-        self.results.append(heading)
+        flatpak_groups = {
+            "Games": {"net.supertuxkart.SuperTuxKart", "com.play0ad.zeroad",
+                      "org.wesnoth.Wesnoth", "org.openttd.OpenTTD",
+                      "net.minetest.Minetest", "org.supertux.SuperTux"},
+            "Creativity": {"org.gimp.GIMP", "org.inkscape.Inkscape", "org.kde.krita",
+                           "org.blender.Blender", "com.obsproject.Studio",
+                           "org.audacityteam.Audacity", "org.kdenlive.Kdenlive"},
+            "Productivity": {"org.libreoffice.LibreOffice", "org.mozilla.Thunderbird",
+                             "org.kde.kate", "org.gnome.Evince", "org.kde.okular"},
+            "Entertainment": {"org.videolan.VLC", "org.audacityteam.Audacity",
+                              "com.github.wwmm.easyeffects"},
+            "Internet": {"org.mozilla.firefox", "org.qbittorrent.qBittorrent",
+                         "org.mozilla.Thunderbird", "org.localsend.localsend_app"},
+            "Utilities": {"com.github.tchx84.Flatseal", "org.keepassxc.KeePassXC",
+                          "org.localsend.localsend_app"},
+            "Developer": {"org.kde.kate"},
+        }
+        flatpak_count = 0
+        if selected == "AI":
+            info = Gtk.Label(label="AI tools: search official repositories for llama.cpp, Ollama, PyTorch and related packages. Install only the tools you need.")
+            info.set_xalign(0)
+            info.set_wrap(True)
+            info.add_css_class("dim-label")
+            self.results.append(info)
         for name, app_id in FLATPAK_CATALOG:
+            if selected != "All" and app_id not in flatpak_groups.get(selected, set()):
+                continue
+            heading_needed = flatpak_count == 0
+            if heading_needed:
+                heading = Gtk.Label(label="FLATHUB APPS  ·  OPTIONAL DOWNLOADS")
+                heading.set_xalign(0)
+                heading.add_css_class("heading")
+                self.results.append(heading)
             row = Gtk.Box(spacing=10)
             label = Gtk.Label(label=f"{name}  ·  {app_id}")
             label.set_xalign(0)
@@ -193,6 +248,9 @@ class Store(Gtk.Application):
             button.connect("clicked", lambda _b, n=name, a=app_id: self.confirm_flatpak(n, a))
             row.append(button)
             self.results.append(row)
+            flatpak_count += 1
+
+        self.set_status(f"{selected}: {native_count} curated system apps and {flatpak_count} optional Flathub apps shown. Search to discover the full repositories.")
 
     def run_async(self, args, success_message):
         if self.busy:
