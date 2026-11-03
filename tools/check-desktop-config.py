@@ -108,6 +108,14 @@ for token in ("def show_message(", "os.o_excl", "0o600", "permission denied"):
     if token not in watchtower.lower():
         sys.exit(f"Watchtower regression check failed: missing {token}")
 
+driver_source = (ROOT / "tools/darth-driver-manager").read_text(encoding="utf-8")
+if "threading.Thread(target=worker,daemon=True).start()" not in driver_source or "GLib.idle_add(apply_refresh" not in driver_source:
+    sys.exit("Driver Manager hardware inventory must run outside the GTK main thread.")
+
+center_source = (ROOT / "tools/darth-center").read_text(encoding="utf-8").lower()
+if "permission denied" not in center_source or "unknown (administrator permission required)" not in center_source:
+    sys.exit("Darth Center firewall permission handling regression.")
+
 control_source = (ROOT / "tools/darth-control-center").read_text(encoding="utf-8")
 if "threading.Thread(target=worker, daemon=True).start()" not in control_source or "GLib.idle_add(apply_refresh, message)" not in control_source:
     sys.exit("Control Center status refresh must run in a worker thread and update GTK via GLib.")
