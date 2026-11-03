@@ -32,8 +32,8 @@ class App(Gtk.Application):
     parts=[]
     checks=[("PCI DEVICES",["lspci","-nnk"]),("USB DEVICES",["lsusb"]),("NETWORK",["ip","-brief","link"]),("GRAPHICS",["sh","-c","ls -l /dev/dri 2>/dev/null || true"]),("FIRMWARE ERRORS",["sh","-c","journalctl -k -b --no-pager 2>/dev/null | grep -iE 'firmware.*(fail|missing)|failed to load firmware' | tail -40 || true"]),("BLOCK DEVICES",["lsblk","-o","NAME,TYPE,FSTYPE,SIZE,MODEL"])]
     for title,args in checks:
-     parts.append("\\n===== "+title+" =====\\n"+run(args))
-    GLib.idle_add(apply_refresh,"\\n".join(parts))
+     parts.append("\n===== "+title+" =====\n"+run(args))
+    GLib.idle_add(apply_refresh,"\n".join(parts))
    threading.Thread(target=worker,daemon=True).start()
   b=Gtk.Button(label="Refresh hardware inventory");b.connect("clicked",refresh);box.append(b)
   g=Gtk.Label(label="Guidance: Intel/AMD graphics usually use in-kernel drivers plus Mesa. NVIDIA choices depend on exact GPU and kernel. Install only signed packages from configured Arch repositories. Confirm hardware model and read package changes first.");g.set_wrap(True);g.set_xalign(0);box.append(g)
