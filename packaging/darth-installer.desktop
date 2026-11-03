@@ -2,9 +2,9 @@
 Version=1.0
 Type=Application
 Name=Darth Installer
-Comment=Install Darth Linux using the Arch Linux installer
+Comment=Install Darth Linux 0.5 with the Archinstall engine
 Exec=darth-installer
-Icon=system-software-install
+Icon=darth-linux
 Terminal=false
 Categories=System;
 StartupNotify=true
