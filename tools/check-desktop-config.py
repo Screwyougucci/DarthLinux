@@ -102,6 +102,10 @@ for token in ("darth-installer-session", "DARTH // INSTALLER"):
     if token not in installer.read_text(encoding="utf-8"):
         sys.exit(f"Installer branding regression: missing {token}")
 
+for reserved_icon in ("org.xfce.thunar.svg", "org.xfce.terminal.svg"):
+    if (PROFILE / "usr/share/icons/hicolor/scalable/apps" / reserved_icon).exists():
+        sys.exit(f"Do not shadow package-owned XFCE icon: {reserved_icon}")
+
 brand_icon = PROFILE / "usr/share/icons/hicolor/scalable/apps/darth-linux.svg"
 if not brand_icon.is_file():
     sys.exit("Unified Darth application icon is missing.")
