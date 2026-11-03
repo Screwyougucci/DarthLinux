@@ -90,7 +90,7 @@ for token in ("/health", "server_ready", "apply_server_probe", "def do_shutdown(
 watchtower = (ROOT / "tools/darth-watchtower").read_text(encoding="utf-8")
 if "self.set_status(" in watchtower:
     sys.exit("Watchtower calls an undefined set_status method.")
-for token in ("def show_message(", "os.O_EXCL", "0o600", "permission denied"):
+for token in ("def show_message(", "os.o_excl", "0o600", "permission denied"):
     if token not in watchtower.lower():
         sys.exit(f"Watchtower regression check failed: missing {token}")
 
