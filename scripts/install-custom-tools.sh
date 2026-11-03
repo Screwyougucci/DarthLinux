@@ -9,6 +9,8 @@ command -v pacman >/dev/null 2>&1 || { echo "This helper is intended for an Arch
 
 mapfile -t packages < <(grep -Ev '^[[:space:]]*(#|$)' "$ROOT/profiles/darth/packages.x86_64")
 echo "Installing the Darth Linux $VERSION package set. This may download several gigabytes."
+read -r -p "Continue with the full system package installation and upgrade? [y/N] " answer
+case "$answer" in y|Y|yes|YES) ;; *) echo "Darth setup cancelled."; exit 0 ;; esac
 pacman -Syu --needed --noconfirm -- "${packages[@]}"
 
 tools=(
