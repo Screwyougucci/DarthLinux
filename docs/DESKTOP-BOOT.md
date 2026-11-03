@@ -18,13 +18,13 @@ The default XFCE panel is configured with:
 - PipeWire/PulseAudio volume control.
 - Clock.
 
-Plank starts automatically as the bottom dock. Its pinned launchers include Firefox, Thunar, XFCE Terminal, Darth Settings, Darth Control Center, and Darth AI Model Manager.
+Plank starts automatically as the bottom dock. Its pinned launchers include Firefox, Darth Files, Darth Terminal, Darth Settings, Darth Control Center, and Darth AI Model Manager.
 
 NetworkManager, Bluetooth, and XFCE power-manager tray applets start with the desktop session. The default application menu exposes the rest of the installed applications, including the security, VM, media, and diagnostic tools.
 
 ## Apps and settings
 
-The Audio, Display, Video, Network, Security, and System settings hub is launched with `darth-settings`. All installed desktop applications also appear in the Whisker menu. Hardware controls only appear or function when supported by the computer.
+The Updates, Audio, Display, Video, Network, Security, and System settings hub is launched with `darth-settings`. All installed desktop applications also appear in the Whisker menu. Hardware controls only appear or function when supported by the computer.
 
 ## Live image vs installed system
 
