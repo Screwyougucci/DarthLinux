@@ -59,7 +59,7 @@ class DarthSettings(Gtk.Application):
         heading = Gtk.Label(label=f"DARTH LINUX {release}  //  SYSTEM SETTINGS")
         heading.add_css_class("title-1"); heading.set_halign(Gtk.Align.START)
         outer.append(heading)
-        sub = Gtk.Label(label="CONTROL YOUR HARDWARE, MEDIA, CONNECTIVITY AND SECURITY")
+        sub = Gtk.Label(label="CONTROL YOUR HARDWARE, MEDIA, CONNECTIVITY, UPDATES AND SECURITY")
         sub.add_css_class("dim"); sub.set_halign(Gtk.Align.START); outer.append(sub)
 
         pages = Gtk.Notebook()
