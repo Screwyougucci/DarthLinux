@@ -4,6 +4,8 @@ import os
 import re
 import shutil
 import subprocess
+import time
+import urllib.request
 from pathlib import Path
 import gi
 
@@ -23,6 +25,9 @@ class AIManager(Gtk.Application):
         self.download_proc = None
         self.download_cancelled = False
         self.server_proc = None
+        self.server_ready = False
+        self.readiness_check_pending = False
+        self.server_started_at = 0.0
 
     def do_activate(self):
         win = Gtk.ApplicationWindow(application=self, title="Darth Linux // AI Model Manager")
@@ -185,6 +190,9 @@ class AIManager(Gtk.Application):
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         log = open(SERVER_LOG, "a", encoding="utf-8")
         try:
+            self.server_ready = False
+            self.readiness_check_pending = False
+            self.server_started_at = time.monotonic()
             self.server_proc = subprocess.Popen(
                 ["llama-server", "--host", "127.0.0.1", "--port", str(SERVER_PORT),
                  "--ctx-size", str(CONTEXT_SIZE), "--threads", str(max(1, (os.cpu_count() or 2) - 1)),
@@ -200,19 +208,46 @@ class AIManager(Gtk.Application):
             self.status.set_text("Could not start llama-server: " + str(exc))
 
     def check_server(self):
-        if self.server_proc and self.server_proc.poll() is None:
-            return GLib.SOURCE_CONTINUE
-        self.server_status.set_text("Local inference server: stopped")
-        self.status.set_text("llama-server exited. Review " + str(SERVER_LOG))
-        if getattr(self, "server_log_handle", None):
-            self.server_log_handle.close()
-            self.server_log_handle = None
-        self.server_proc = None
+        proc = self.server_proc
+        if not proc:
+            return GLib.SOURCE_REMOVE
+        if proc.poll() is not None:
+            self.server_ready = False
+            self.server_status.set_text("Local inference server: stopped")
+            self.status.set_text("llama-server exited. Review " + str(SERVER_LOG))
+            if getattr(self, "server_log_handle", None):
+                self.server_log_handle.close()
+                self.server_log_handle = None
+            self.server_proc = None
+            return GLib.SOURCE_REMOVE
+        if not self.server_ready and not self.readiness_check_pending:
+            self.readiness_check_pending = True
+            def probe():
+                ready = False
+                try:
+                    with urllib.request.urlopen(f"http://127.0.0.1:{SERVER_PORT}/health", timeout=0.8) as response:
+                        ready = response.status == 200
+                except Exception:
+                    pass
+                GLib.idle_add(self.apply_server_probe, proc, ready)
+            threading.Thread(target=probe, daemon=True).start()
+        return GLib.SOURCE_CONTINUE
+
+    def apply_server_probe(self, proc, ready):
+        self.readiness_check_pending = False
+        if proc is not self.server_proc or proc.poll() is not None:
+            return GLib.SOURCE_REMOVE
+        if ready and not self.server_ready:
+            self.server_ready = True
+            self.server_status.set_text("Local inference server: ready · http://127.0.0.1:" + str(SERVER_PORT))
+            self.status.set_text("Model is loaded and the local chat endpoint is ready.")
+        elif not self.server_ready and time.monotonic() - self.server_started_at > 90:
+            self.status.set_text("Model is still loading. Chat will become available automatically when the health check passes.")
         return GLib.SOURCE_REMOVE
 
     def open_chat(self, *_):
-        if not self.server_proc or self.server_proc.poll() is not None:
-            self.status.set_text("Start a local model first; the chat page is available only while llama-server is running.")
+        if not self.server_proc or self.server_proc.poll() is not None or not self.server_ready:
+            self.status.set_text("Wait for the local model health check to pass before opening chat.")
             return
         try:
             subprocess.Popen(["xdg-open", "http://127.0.0.1:" + str(SERVER_PORT)])
@@ -221,6 +256,7 @@ class AIManager(Gtk.Application):
 
     def stop_server(self, *_):
         if self.server_proc and self.server_proc.poll() is None:
+            self.server_ready = False
             self.server_proc.terminate()
             self.server_status.set_text("Stopping local inference server…")
             self.status.set_text("Stop requested.")
