@@ -32,11 +32,14 @@ for desktop in darth-control-center.desktop darth-ai-manager.desktop darth-setti
   install -Dm644 "$ROOT_DIR/packaging/$desktop" "$APP_DIR/$desktop"
 done
 # Convert text placeholders into real systemd unit symlinks in the build tree.
-for unit in NetworkManager nftables; do
-  link="$TMP_PROFILE/airootfs/etc/systemd/system/multi-user.target.wants/$unit.service"
+for unit in NetworkManager.service nftables.service \
+            virtqemud.socket virtnetworkd.socket virtstoraged.socket \
+            virtsecretd.socket virtlogd.socket virtlockd.socket \
+            virtnodedevd.socket virtnwfilterd.socket virtinterfaced.socket; do
+  link="$TMP_PROFILE/airootfs/etc/systemd/system/multi-user.target.wants/$unit"
   rm -f "$link"
-  ln -s "../../../../usr/lib/systemd/system/$unit.service" "$link"
-  expected="$TMP_PROFILE/airootfs/usr/lib/systemd/system/$unit.service"
+  ln -s "../../../../usr/lib/systemd/system/$unit" "$link"
+  expected="$TMP_PROFILE/airootfs/usr/lib/systemd/system/$unit"
   actual="$(realpath -m "$link")"
   [[ "$actual" == "$expected" ]] || die "Incorrect systemd link target for $unit: $actual"
 done
