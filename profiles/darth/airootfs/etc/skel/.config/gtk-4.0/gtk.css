@@ -1,0 +1,17 @@
+/* DARTH UI — GTK 4 system-wide theme */
+@define-color darth_bg #0b0d12;
+@define-color darth_surface #141820;
+@define-color darth_surface_raised #1b202a;
+@define-color darth_border #303846;
+@define-color darth_red #c51d38;
+@define-color darth_text #edf0f5;
+@define-color darth_muted #a3adbb;
+window, dialog, .background { background: @darth_bg; color: @darth_text; }
+headerbar, .titlebar { background: @darth_surface; color: @darth_text; border-bottom: 1px solid @darth_border; }
+button { background-image: none; background-color: @darth_surface_raised; color: @darth_text; border: 1px solid @darth_border; border-radius: 8px; padding: 7px 12px; }
+button:hover { background-color: #292f3b; border-color: #586273; }
+button:checked, button.suggested-action { background-color: @darth_red; color: white; border-color: @darth_red; }
+entry, textview, spinbutton, combobox, dropdown { background: @darth_surface; color: @darth_text; border: 1px solid @darth_border; border-radius: 7px; }
+selection { background: @darth_red; color: white; }
+label { color: @darth_text; }
+.dim-label { color: @darth_muted; }
