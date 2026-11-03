@@ -10,7 +10,7 @@ sudo bash scripts/install-custom-tools.sh
 
 Then open **Darth Control Center** from the XFCE applications menu, or run `darth-control-center`.
 
-The dashboard provides launchers for Virtual Machine Manager, NetworkManager's connection editor, btop, local network diagnostics, Mousepad, ClamUI, Darth Center, and the scope-limited lab scanner. It also displays the current NetworkManager VPN connection state and nftables service state.
+The dashboard provides launchers for Virtual Machine Manager, NetworkManager's connection editor, btop, local network diagnostics, Darth Notes, ClamUI, Darth Center, and the scope-limited lab scanner. It also displays the current NetworkManager VPN connection state and nftables service state.
 
 ## VPN support
 
