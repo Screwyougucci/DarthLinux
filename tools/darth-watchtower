@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Darth Watchtower: lightweight local system and security dashboard."""
-import csv, os, shutil, subprocess, time
+import csv, os, shutil, subprocess, time, threading
 from pathlib import Path
 import gi
 gi.require_version("Gtk","4.0")
@@ -15,8 +15,9 @@ THEMES={
 def read_cpu():
  try:
   v=list(map(int,Path("/proc/stat").read_text().splitlines()[0].split()[1:]))
-  return sum(v[:8]),v[3]+(v[4] if len(v)>4 else 0)
- except Exception:return (0,0)
+  if len(v)<8:return None
+  return sum(v[:8]),v[3]+v[4]
+ except (OSError,ValueError,IndexError):return None
 def metrics():
  mem={}
  try:
@@ -25,9 +26,15 @@ def metrics():
  except Exception:pass
  total=mem.get("MemTotal",0);avail=mem.get("MemAvailable",0)
  du=shutil.disk_usage("/")
- cpu=0
+ cpu="unavailable"
  try:
-  a,b=read_cpu();time.sleep(.08);c,d=read_cpu();cpu=100*(1-(d-b)/max(1,c-a))
+  first=read_cpu()
+  if first is not None:
+   time.sleep(.08)
+   second=read_cpu()
+   if second is not None:
+    a,b=first;c,d=second
+    cpu=f"{max(0.0,min(100.0,100*(1-(d-b)/max(1,c-a)))):.1f}%"
  except Exception:pass
  rx=tx=0
  try:
@@ -35,13 +42,13 @@ def metrics():
    name,vals=line.split(":");v=list(map(int,vals.split()))
    if name.strip()!="lo":rx+=v[0];tx+=v[8]
  except Exception:pass
- return {"CPU":f"{cpu:.1f}%","Memory":f"{(total-avail)/1024:.0f} / {total/1024:.0f} MiB","Disk":f"{du.used/du.total*100:.1f}% used ({du.free//(1024**3)} GiB free)","Network":f"RX {rx/1048576:.1f} MiB · TX {tx/1048576:.1f} MiB","Firewall":cmd(["systemctl","is-active","nftables"]),"ClamAV":cmd(["systemctl","is-active","clamav-daemon"]),"Kernel":cmd(["uname","-r"])}
+ return {"CPU":cpu,"Memory":f"{(total-avail)/1024:.0f} / {total/1024:.0f} MiB","Disk":f"{du.used/du.total*100:.1f}% used ({du.free//(1024**3)} GiB free)","Network":f"RX {rx/1048576:.1f} MiB total · TX {tx/1048576:.1f} MiB total","Firewall service":cmd(["systemctl","is-active","nftables"]),"ClamAV daemon":cmd(["systemctl","is-active","clamav-daemon"]),"Kernel":cmd(["uname","-r"])}
 def cmd(args):
  try:
   p=subprocess.run(args,text=True,capture_output=True,timeout=2);return (p.stdout or p.stderr).strip() or "not reported"
  except Exception:return "unavailable"
 class App(Gtk.Application):
- def __init__(self):super().__init__(application_id="org.darthlinux.Watchtower",flags=Gio.ApplicationFlags.DEFAULT_FLAGS);self.values={}
+ def __init__(self):super().__init__(application_id="org.darthlinux.Watchtower",flags=Gio.ApplicationFlags.DEFAULT_FLAGS);self.values={};self.refreshing=False;self.css_provider=None
  def do_activate(self):
   w=Gtk.ApplicationWindow(application=self);w.set_title("DARTH // WATCHTOWER");w.set_default_size(900,650);self.win=w
   root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=12);root.set_margin_top(20);root.set_margin_bottom(20);root.set_margin_start(22);root.set_margin_end(22);w.set_child(root)
@@ -50,7 +57,7 @@ class App(Gtk.Application):
   self.theme=Gtk.DropDown.new_from_strings(list(THEMES));top.append(self.theme);self.theme.connect("notify::selected",lambda *_:self.style())
   self.grid=Gtk.Grid(column_spacing=12,row_spacing=12);self.grid.set_hexpand(True);self.grid.set_vexpand(True);root.append(self.grid)
   self.labels={}
-  for i,k in enumerate(["CPU","Memory","Disk","Network","Firewall","ClamAV","Kernel"]):
+  for i,k in enumerate(["CPU","Memory","Disk","Network","Firewall service","ClamAV daemon","Kernel"]):
    frame=Gtk.Frame(label=k);box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8);box.set_margin_top(14);box.set_margin_bottom(14);box.set_margin_start(14);box.set_margin_end(14)
    val=Gtk.Label(label="Collecting…");val.set_wrap(True);val.set_xalign(0);box.append(val);frame.set_child(box);self.grid.attach(frame,i%2,i//2,1,1);self.labels[k]=val
   actions=Gtk.Box(spacing=8);root.append(actions)
@@ -60,12 +67,24 @@ class App(Gtk.Application):
   self.style();self.refresh();GLib.timeout_add_seconds(3,self.refresh);w.present()
  def style(self):
   bg,accent,panel=list(THEMES.values())[self.theme.get_selected()]
-  css=Gtk.CssProvider();css.load_from_data(f"window {{background:{bg};color:#eee}} label {{color:#eee}} .title-1 {{color:{accent};font-weight:800}} frame {{background:{panel};border:1px solid {accent};border-radius:10px;padding:8px}} button {{padding:8px}}".encode())
-  Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),css,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+  display=Gdk.Display.get_default()
+  if not display:return
+  if self.css_provider is not None:Gtk.StyleContext.remove_provider_for_display(display,self.css_provider)
+  self.css_provider=Gtk.CssProvider();self.css_provider.load_from_data(f"window {{background:{bg};color:#eee}} label {{color:#eee}} .title-1 {{color:{accent};font-weight:800}} frame {{background:{panel};border:1px solid {accent};border-radius:10px;padding:8px}} button {{padding:8px}}".encode())
+  Gtk.StyleContext.add_provider_for_display(display,self.css_provider,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
  def refresh(self):
-  self.values=metrics()
-  for k,v in self.values.items():self.labels[k].set_text(v)
+  if self.refreshing:return True
+  self.refreshing=True
+  def collect():
+   values=metrics()
+   GLib.idle_add(self.apply_refresh,values)
+  threading.Thread(target=collect,daemon=True).start()
   return True
+ def apply_refresh(self,values):
+  self.values=values
+  for k,v in values.items():self.labels[k].set_text(v)
+  self.refreshing=False
+  return False
  def export(self):
   path=Path.home()/("darth-watchtower-"+time.strftime("%Y%m%d-%H%M%S")+".csv")
   with path.open("w",newline="") as f:
