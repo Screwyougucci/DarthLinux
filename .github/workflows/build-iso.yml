@@ -50,6 +50,7 @@ jobs:
               for f in tools/darth-av-scan tools/darth-guardian tools/darth-lockdown tools/darth-redlab; do bash -n "$f"; done
               bash -n build.sh scripts/install-custom-tools.sh scripts/install-security-tools.sh
               python tools/darth-hwcheck --self-test
+              python tools/check-store-catalog.py
               nft -c -f profiles/darth/airootfs/etc/nftables.conf
               bash ./build.sh
               test -n "$(find out -maxdepth 1 -type f -name "*.iso" -print -quit)"
