@@ -167,7 +167,28 @@ class Store(Gtk.Application):
         if not query or len(query) > 128 or not PACKAGE_RE.fullmatch(query):
             self.set_status("Enter a package name or search term (letters, numbers and . _ + : -).")
             return
-        self.run_async(["pacman", "-Ss", query], f"Repository search: {query}")
+        if self.busy:
+            self.set_status("Wait for the current package operation to finish.")
+            return
+        self.busy = True
+        self.set_status("Searching the official Arch Extra repository…")
+
+        def worker():
+            try:
+                result = subprocess.run(["pacman", "-Sl", "extra"], text=True,
+                                        capture_output=True, timeout=120, check=False)
+                if result.returncode != 0:
+                    message = "Official Extra repository search failed.\\n" + (result.stderr or result.stdout)[-8000:]
+                else:
+                    matches = [line for line in result.stdout.splitlines()
+                               if len(line.split()) >= 2 and query.casefold() in line.split()[1].casefold()]
+                    message = ("Official Arch Extra packages matching " + query + ":\\n" +
+                               ("\\n".join(matches[:150]) if matches else "No matching package names found."))
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                message = "Repository search unavailable: " + str(exc)
+            GLib.idle_add(self.finish_operation, message)
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def installed(self, *_):
         self.run_async(["pacman", "-Q"], "Installed packages")
@@ -193,7 +214,7 @@ class Store(Gtk.Application):
                     self.set_status("pkexec is missing. Install the polkit package to enable authenticated installs.")
                     return
                 self.run_async(
-                    ["pkexec", "pacman", "-S", "--needed", "--", package],
+                    ["pkexec", "pacman", "-S", "--needed", "--", "extra/" + package],
                     f"Installation finished for {package}."
                 )
 
