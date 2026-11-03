@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Darth Notes
+Comment=Lightweight plain-text editor
+Exec=darth-notes
+Icon=accessories-text-editor
+Terminal=false
+Categories=Utility;TextEditor;
