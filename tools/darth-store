@@ -85,6 +85,7 @@ class Store(Gtk.Application):
     def do_activate(self):
         win = Gtk.ApplicationWindow(application=self)
         win.set_title("DARTH // STORE")
+        win.set_icon_name("darth-store")
         win.set_default_size(900, 680)
         self.win = win
 
@@ -164,7 +165,7 @@ class Store(Gtk.Application):
             button.set_sensitive(category != selected)
 
         native_groups = {
-            "AI": {"AI", "Developer"},
+            "AI": set(),
             "Games": {"Games"},
             "Productivity": {"Office", "Files", "Sync"},
             "Creativity": {"Graphics", "3D & Video", "Audio"},
