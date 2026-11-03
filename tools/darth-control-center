@@ -68,7 +68,7 @@ class ControlCenter(Gtk.Application):
             vpn_lines = [line for line in active.splitlines() if "vpn" in line.lower() or "wireguard" in line.lower()]
             vpn = "\n".join(vpn_lines) if vpn_lines else "No VPN connection currently active"
             firewall = run(["systemctl", "is-active", "nftables"])
-            status.set_text("NETWORK / VPN STATUS\n" + vpn + "\n\nFirewall (nftables): " + firewall)
+            status.set_text("NETWORK / VPN STATUS\n" + vpn + "\n\nFirewall service (nftables): " + firewall)
         refresh()
 
         grid = Gtk.Grid(column_spacing=10, row_spacing=10)
