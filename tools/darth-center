@@ -33,8 +33,10 @@ def firewall_rules_status():
     try:
         p=subprocess.run(["nft","list","table","inet","darth_filter"],text=True,capture_output=True,timeout=3,check=False)
         if p.returncode==0:return "loaded"
-        if "Operation not permitted" in p.stderr:return "unknown (permission required)"
-        return "not loaded"
+        error=(p.stderr or p.stdout).lower()
+        if "operation not permitted" in error or "permission denied" in error:return "unknown (administrator permission required)"
+        if "no such file or directory" in error or "does not exist" in error:return "not loaded"
+        return "unknown (nft query failed)"
     except (OSError,subprocess.TimeoutExpired):return "unavailable"
 
 def clam_db_time():
