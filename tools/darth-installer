@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+if ! command -v archinstall >/dev/null 2>&1; then
+  printf 'Darth Installer: archinstall is not installed.\n' >&2
+  exit 127
+fi
+if ! command -v xfce4-terminal >/dev/null 2>&1; then
+  printf 'Darth Installer requires xfce4-terminal.\n' >&2
+  exit 127
+fi
+
+if [[ $EUID -eq 0 ]]; then
+  command=(archinstall)
+else
+  command=(sudo archinstall)
+fi
+
+exec xfce4-terminal --title="DARTH // INSTALLER" --hold --command="${command[*]}"
