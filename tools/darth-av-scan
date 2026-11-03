@@ -11,8 +11,17 @@ fi
 command -v clamscan >/dev/null 2>&1 || { echo "ClamAV is not installed." >&2; exit 1; }
 TARGET="$(realpath -- "$TARGET")"
 [[ -e "$TARGET" ]] || { echo "Target does not exist: $TARGET" >&2; exit 1; }
-echo "Updating ClamAV signatures (if configured)..."
-freshclam || echo "Warning: signature update failed; using the installed database." >&2
+echo "Checking ClamAV signature updater..."
+if systemctl is-active --quiet clamav-freshclam.service; then
+  echo "Automatic ClamAV updater is already running; leaving it to manage database updates."
+elif [[ $EUID -eq 0 ]]; then
+  freshclam || echo "Warning: signature update failed; using the installed database." >&2
+elif command -v sudo >/dev/null 2>&1; then
+  echo "Administrator permission is needed to update the system-wide signature database."
+  sudo freshclam || echo "Warning: signature update failed or was declined; using the installed database." >&2
+else
+  echo "Warning: cannot update system-wide signatures without administrator permission; using the installed database." >&2
+fi
 echo "Scanning: $TARGET"
 echo "No files will be automatically deleted or quarantined."
 set +e
