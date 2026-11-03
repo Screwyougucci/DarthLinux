@@ -240,7 +240,7 @@ class Store(Gtk.Application):
                 result = subprocess.run(["pacman", "-Ss", re.escape(query)], text=True,
                                         capture_output=True, timeout=120, check=False)
                 if result.returncode not in (0, 1):
-                    error = "Official repository search failed.\\n" + (result.stderr or result.stdout)[-8000:]
+                    error = "Official repository search failed.\n" + (result.stderr or result.stdout)[-8000:]
                     matches = []
                 else:
                     matches = []
@@ -248,7 +248,7 @@ class Store(Gtk.Application):
                     index = 0
                     while index < len(lines):
                         header = lines[index].strip()
-                        match = re.match(r"^([A-Za-z0-9_-]+)/([A-Za-z0-9@._+:-]+)\\s+([^\\s]+)(?:\\s+\\[installed\\])?$", header)
+                        match = re.match(r"^([A-Za-z0-9_-]+)/([A-Za-z0-9@._+:-]+)\s+([^\s]+)(?:\s+\[installed\])?$", header)
                         if match and match.group(1) in OFFICIAL_REPOSITORIES:
                             description = lines[index + 1].strip() if index + 1 < len(lines) else ""
                             matches.append((match.group(1), match.group(2), match.group(3), description))
