@@ -92,6 +92,10 @@ match = header.fullmatch(sample)
 if not match or match.group(1) != "extra" or match.group(2) != "firefox":
     sys.exit("Darth Store package-search result parser failed its regression sample.")
 
+settings_source = (ROOT / "tools/darth-settings").read_text(encoding="utf-8")
+if "Refresh audio devices" not in settings_source or "refresh_audio.connect(\\"clicked\\", read_volume)" not in settings_source:
+    sys.exit("Darth Settings audio device refresh regression.")
+
 ai_manager = (ROOT / "tools/darth-ai-manager").read_text(encoding="utf-8")
 for token in ("/health", "server_ready", "apply_server_probe", "def do_shutdown(self)"):
     if token not in ai_manager:
