@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-exec xfce4-terminal --title="DARTH // TERMINAL" "$@"
+exec xfce4-terminal --icon=darth-linux --title="DARTH // TERMINAL" "$@"
