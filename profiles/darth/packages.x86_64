@@ -1,4 +1,8 @@
 # Lightweight XFCE desktop and live-session essentials
+adwaita-gtk-theme
+adwaita-icon-theme
+librsvg
+noto-fonts
 base
 linux
 linux-firmware
