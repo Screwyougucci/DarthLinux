@@ -87,6 +87,10 @@ libvirt
 dnsmasq
 edk2-ovmf
 
+# Authentication for graphical package installs in Darth Store
+polkit
+polkit-gnome
+
 # Darth graphical control center
 gtk4
 python-gobject
