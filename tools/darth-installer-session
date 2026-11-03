@@ -27,7 +27,7 @@ printf '\nDarth Installer finished with exit code %s.\n' "$status"
 if [[ $status -eq 0 ]]; then
   printf '\nNEXT STEP — INSTALL THE DARTH DESKTOP ON YOUR NEW SYSTEM\n'
   printf 'After rebooting into the installed system and connecting to the internet, run:\n\n'
-  printf '  git clone https://github.com/Screwyougucci/DarthLinux.git\n'
+  printf '  sudo pacman -Syu --needed git\ngit clone https://github.com/Screwyougucci/DarthLinux.git\n'
   printf '  cd DarthLinux\n'
   printf '  sudo bash scripts/install-custom-tools.sh\n\n'
   printf 'This installs the Darth 0.5 desktop, applications, firewall defaults and Update Center.\n'
