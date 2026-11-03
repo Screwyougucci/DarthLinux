@@ -1,12 +1,14 @@
-/* Darth Linux — original graphite / crimson GTK accents */
-@define-color darth_bg #101114;
-@define-color darth_panel #191b20;
-@define-color darth_red #b5122b;
-@define-color darth_text #e8e8eb;
+/* DARTH UI — GTK 3 system-wide theme */
+@define-color darth_bg #0b0d12;
+@define-color darth_panel #141820;
+@define-color darth_red #c51d38;
+@define-color darth_text #edf0f5;
+@define-color darth_muted #a3adbb;
 window, dialog, .background { background-color: @darth_bg; color: @darth_text; }
-headerbar, .titlebar, toolbar { background-color: @darth_panel; color: @darth_text; }
-button { background-image: none; background-color: #252830; color: @darth_text; border: 1px solid #3b3e47; border-radius: 5px; }
-button:hover { background-color: #343842; }
+headerbar, .titlebar, toolbar { background-color: @darth_panel; color: @darth_text; border-bottom: 1px solid #303846; }
+button { background-image: none; background-color: #1b202a; color: @darth_text; border: 1px solid #303846; border-radius: 7px; padding: 6px 10px; }
+button:hover { background-color: #292f3b; }
 button:checked, button.suggested-action { background-color: @darth_red; color: #fff; }
-entry, textview, spinbutton, combobox { background-color: #17191e; color: @darth_text; border: 1px solid #41444d; }
+entry, textview, spinbutton, combobox { background-color: #141820; color: @darth_text; border: 1px solid #303846; border-radius: 6px; }
 selection { background-color: @darth_red; color: #fff; }
+.dim-label { color: @darth_muted; }
