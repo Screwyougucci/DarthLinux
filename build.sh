@@ -43,6 +43,14 @@ for unit in NetworkManager.service nftables.service \
   actual="$(realpath -m "$link")"
   [[ "$actual" == "$expected" ]] || die "Incorrect systemd link target for $unit: $actual"
 done
+# Autostart libvirt's packaged NAT network for ordinary QEMU guest connectivity.
+LIBVIRT_NETWORKS="$TMP_PROFILE/airootfs/etc/libvirt/qemu/networks"
+mkdir -p "$LIBVIRT_NETWORKS/autostart"
+ln -sfn ../default.xml "$LIBVIRT_NETWORKS/autostart/default.xml"
+network_link="$LIBVIRT_NETWORKS/autostart/default.xml"
+expected_network="$LIBVIRT_NETWORKS/default.xml"
+actual_network="$(realpath -m "$network_link")"
+[[ "$actual_network" == "$expected_network" ]] || die "Incorrect libvirt default network autostart link: $actual_network"
 # Boot to the graphical desktop and show the LightDM login screen.
 mkdir -p "$TMP_PROFILE/airootfs/etc/systemd/system/graphical.target.wants"
 ln -sf /usr/lib/systemd/system/graphical.target "$TMP_PROFILE/airootfs/etc/systemd/system/default.target"
