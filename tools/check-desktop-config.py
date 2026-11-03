@@ -72,6 +72,16 @@ desktop_config.read(desktop, encoding="utf-8")
 if desktop_config.get("Desktop Entry", "Exec", fallback="") != "darth-installer":
     sys.exit("Darth Installer desktop entry does not launch darth-installer.")
 
+for app_name, expected_exec in (("darth-terminal.desktop", "xfce4-terminal --title=\\"DARTH // TERMINAL\\""),
+                          ("darth-files.desktop", "thunar")):
+    entry_path = ROOT / "packaging" / app_name
+    entry = configparser.ConfigParser(interpolation=None)
+    entry.read(entry_path, encoding="utf-8")
+    if entry.get("Desktop Entry", "Exec", fallback="") != expected_exec:
+        sys.exit(f"Invalid Darth launcher entry: {app_name}")
+    if app_name not in build_script:
+        sys.exit(f"Build does not install {app_name}")
+
 store = (ROOT / "tools/darth-store").read_text(encoding="utf-8")
 for token in ("SEARCH_RE", "OFFICIAL_REPOSITORIES", '"pacman", "-Ss"', "re.escape(query)"):
     if token not in store:
