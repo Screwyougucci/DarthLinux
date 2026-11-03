@@ -50,7 +50,14 @@ def cmd(args):
 def firewall_rules_status():
  try:
   p=subprocess.run(["nft","list","table","inet","darth_filter"],text=True,capture_output=True,timeout=2)
-  return "loaded" if p.returncode == 0 else "not loaded"
+  if p.returncode == 0:
+   return "loaded"
+  error=(p.stderr or p.stdout).lower()
+  if "operation not permitted" in error or "permission denied" in error:
+   return "unknown (administrator permission required)"
+  if "no such file or directory" in error or "does not exist" in error:
+   return "not loaded"
+  return "unknown (nft query failed)"
  except (OSError,subprocess.TimeoutExpired):return "unavailable"
 class App(Gtk.Application):
  def __init__(self):super().__init__(application_id="org.darthlinux.Watchtower",flags=Gio.ApplicationFlags.DEFAULT_FLAGS);self.values={};self.refreshing=False;self.css_provider=None
@@ -94,12 +101,26 @@ class App(Gtk.Application):
   for k,v in values.items():self.labels[k].set_text(v)
   self.refreshing=False
   return False
+ def show_message(self,title,detail):
+  dialog=Gtk.AlertDialog()
+  dialog.set_message(title)
+  dialog.set_detail(detail)
+  dialog.show(self.win)
  def export(self):
   if not self.values:
-   self.set_status("No metrics collected yet. Wait for the first refresh, then export.")
+   self.show_message("No metrics available","Wait for the first dashboard refresh, then export the report.")
    return
   path=Path.home()/("darth-watchtower-"+time.strftime("%Y%m%d-%H%M%S")+".csv")
-  with path.open("w",newline="") as f:
-   wr=csv.writer(f);wr.writerow(["metric","value","captured_local"]);[wr.writerow([k,v,time.strftime("%Y-%m-%d %H:%M:%S")]) for k,v in self.values.items()]
-  d=Gtk.AlertDialog();d.set_message("Report exported");d.set_detail(f"{path}\nReview before sharing: reports may reveal host and security state.");d.show(self.win)
+  try:
+   fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+   with os.fdopen(fd,"w",newline="") as f:
+    wr=csv.writer(f)
+    wr.writerow(["metric","value","captured_local"])
+    captured=time.strftime("%Y-%m-%d %H:%M:%S")
+    for key,value in self.values.items():
+     wr.writerow([key,value,captured])
+  except OSError as exc:
+   self.show_message("Report export failed",str(exc))
+   return
+  self.show_message("Report exported",f"{path}\nSaved with owner-only permissions. Review before sharing: reports may reveal host and security state.")
 App().run(None)
