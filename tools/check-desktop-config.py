@@ -89,7 +89,7 @@ for path in (ROOT / "tools/darth-terminal", ROOT / "tools/darth-files", installe
 post_install = (ROOT / "scripts/install-custom-tools.sh").read_text(encoding="utf-8")
 for token in ("pacman -Syu", "darth-installer-session",
               "darth-settings.desktop", "ICON_SOURCE", "nftables.conf",
-              "systemctl set-default graphical.target"):
+              "systemctl set-default graphical.target", "gtk-3.0/settings.ini", "xfce4/terminal/terminalrc", "Darth Linux interactive shell identity"):
     if token not in post_install:
         sys.exit(f"Post-install deployment regression: missing {token}")
 installer_session_source = installer_session.read_text(encoding="utf-8")
