@@ -14,7 +14,7 @@ PACKAGES = set(
     if line.strip() and not line.lstrip().startswith("#")
 )
 
-required_packages = {"adw-gtk-theme", "adwaita-icon-theme", "librsvg", "noto-fonts"}
+required_packages = {"adw-gtk-theme", "adwaita-icon-theme", "hicolor-icon-theme", "librsvg", "noto-fonts", "pacman-contrib"}
 missing = sorted(required_packages - PACKAGES)
 if missing:
     sys.exit("Missing desktop theme dependencies: " + ", ".join(missing))
@@ -59,7 +59,7 @@ for gtk_settings in (
 
 terminal = PROFILE / "etc/skel/.config/xfce4/terminal/terminalrc"
 terminal_text = terminal.read_text(encoding="utf-8")
-for setting in ("ColorBackground=#0b0d12", "ColorForeground=#edf0f5", "ColorCursor=#c51d38"):
+for setting in ("ColorBackground=#0b0d12", "ColorForeground=#edf0f5", "ColorCursor=#c51d38", "TitleInitial=DARTH // TERMINAL"):
     if setting not in terminal_text:
         sys.exit(f"Darth terminal theme is missing setting: {setting}")
 
@@ -72,8 +72,8 @@ desktop_config.read(desktop, encoding="utf-8")
 if desktop_config.get("Desktop Entry", "Exec", fallback="") != "darth-installer":
     sys.exit("Darth Installer desktop entry does not launch darth-installer.")
 
-for app_name, expected_exec in (("darth-terminal.desktop", "xfce4-terminal --title=DARTH-TERMINAL"),
-                          ("darth-files.desktop", "thunar")):
+for app_name, expected_exec in (("darth-terminal.desktop", "darth-terminal"),
+                          ("darth-files.desktop", "darth-files")):
     entry_path = ROOT / "packaging" / app_name
     entry = configparser.ConfigParser(interpolation=None)
     entry.read(entry_path, encoding="utf-8")
@@ -81,6 +81,42 @@ for app_name, expected_exec in (("darth-terminal.desktop", "xfce4-terminal --tit
         sys.exit(f"Invalid Darth launcher entry: {app_name}")
     if app_name not in build_script:
         sys.exit(f"Build does not install {app_name}")
+
+installer_session = ROOT / "tools/darth-installer-session"
+for path in (ROOT / "tools/darth-terminal", ROOT / "tools/darth-files", installer_session):
+    if not path.is_file():
+        sys.exit(f"Missing Darth-branded launcher: {path.relative_to(ROOT)}")
+for token in ("darth-installer-session", "DARTH // INSTALLER"):
+    if token not in installer.read_text(encoding="utf-8"):
+        sys.exit(f"Installer branding regression: missing {token}")
+
+brand_icon = PROFILE / "usr/share/icons/hicolor/scalable/apps/darth-linux.svg"
+if not brand_icon.is_file():
+    sys.exit("Unified Darth application icon is missing.")
+ET.parse(brand_icon)
+for desktop_path in (ROOT / "packaging").glob("*.desktop"):
+    desktop_entry = configparser.ConfigParser(interpolation=None)
+    desktop_entry.read(desktop_path, encoding="utf-8")
+    if desktop_entry.get("Desktop Entry", "Icon", fallback="") != "darth-linux":
+        sys.exit(f"Desktop launcher does not use the Darth icon: {desktop_path.name}")
+
+version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+if version != "0.5":
+    sys.exit(f"Expected Darth Linux 0.5, found {version}")
+for path in (ROOT / "profiles/darth/airootfs/etc/darth-linux-release",
+             ROOT / "profiles/darth/boot/splash.svg", wallpaper):
+    if "0.5" not in path.read_text(encoding="utf-8"):
+        sys.exit(f"Darth Linux 0.5 identity missing from {path.relative_to(ROOT)}")
+
+settings_source = (ROOT / "tools/darth-settings").read_text(encoding="utf-8")
+for token in ("checkupdates", "--nocolor", "pkexec", "/usr/bin/pacman", '"-Syu"',
+              "flatpak", '"--user"', "system-update.log", "threading.Thread"):
+    if token not in settings_source:
+        sys.exit(f"Darth Update Center regression: missing {token}")
+for token in ("VERSION", "darth-linux-${VERSION}", "darth-terminal", "darth-files",
+              "darth-installer-session", "darth-linux-release"):
+    if token not in build_script:
+        sys.exit(f"0.5 image build integration regression: missing {token}")
 
 store = (ROOT / "tools/darth-store").read_text(encoding="utf-8")
 for token in ("SEARCH_RE", "OFFICIAL_REPOSITORIES", '"pacman", "-Ss"', "re.escape(query)"):
