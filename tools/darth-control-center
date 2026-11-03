@@ -18,9 +18,12 @@ def firewall_rules_status():
                            text=True, capture_output=True, timeout=3, check=False)
         if p.returncode == 0:
             return "Darth ruleset loaded"
-        if "Operation not permitted" in p.stderr:
+        error = (p.stderr or p.stdout).lower()
+        if "operation not permitted" in error or "permission denied" in error:
             return "Unknown (administrator permission required)"
-        return "Darth ruleset not loaded"
+        if "no such file or directory" in error or "does not exist" in error:
+            return "Darth ruleset not loaded"
+        return "Unknown (nft query failed)"
     except (OSError, subprocess.TimeoutExpired):
         return "Unknown (nft unavailable)"
 
