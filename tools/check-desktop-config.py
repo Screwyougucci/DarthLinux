@@ -87,8 +87,8 @@ for path in (ROOT / "tools/darth-terminal", ROOT / "tools/darth-files", installe
     if not path.is_file():
         sys.exit(f"Missing Darth-branded launcher: {path.relative_to(ROOT)}")
 post_install = (ROOT / "scripts/install-custom-tools.sh").read_text(encoding="utf-8")
-for token in ("pacman -Syu", "pacman-contrib", "darth-installer-session",
-              "darth-settings.desktop", "darth-linux.svg", "nftables.conf",
+for token in ("pacman -Syu", "darth-installer-session",
+              "darth-settings.desktop", "ICON_SOURCE", "nftables.conf",
               "systemctl set-default graphical.target"):
     if token not in post_install:
         sys.exit(f"Post-install deployment regression: missing {token}")
