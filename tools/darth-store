@@ -265,7 +265,7 @@ class Store(Gtk.Application):
                 else:
                     matches = []
                     lines = result.stdout.splitlines()
-                    header_re = re.compile(r"^([A-Za-z0-9_-]+)/([A-Za-z0-9@._+:-]+)\s+(\\S+)(?:\s+\\[installed\\])?$")
+                    header_re = re.compile(r"^([A-Za-z0-9_-]+)/([A-Za-z0-9@._+:-]+)\s+(\S+)(?:\s+\[installed\])?$")
                     for index, line in enumerate(lines):
                         match = header_re.fullmatch(line.strip())
                         if not match or match.group(1) not in OFFICIAL_REPOSITORIES:
