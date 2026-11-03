@@ -218,7 +218,7 @@ class Store(Gtk.Application):
     def search(self, *_):
         query = self.entry.get_text().strip()
         if not query or len(query) > 128 or not PACKAGE_RE.fullmatch(query):
-            self.set_status("Enter a package name or search term (letters, numbers and . _ + : -).")
+            self.set_status("Enter a package name (letters, numbers and . _ + : -).")
             return
         if self.busy:
             self.set_status("Wait for the current package operation to finish.")
@@ -231,17 +231,56 @@ class Store(Gtk.Application):
                 result = subprocess.run(["pacman", "-Sl", "extra"], text=True,
                                         capture_output=True, timeout=120, check=False)
                 if result.returncode != 0:
-                    message = "Official Extra repository search failed.\n" + (result.stderr or result.stdout)[-8000:]
+                    error = "Official Extra repository search failed.\\n" + (result.stderr or result.stdout)[-8000:]
+                    matches = []
                 else:
-                    matches = [line for line in result.stdout.splitlines()
-                               if len(line.split()) >= 2 and query.casefold() in line.split()[1].casefold()]
-                    message = ("Official Arch Extra packages matching " + query + ":\n" +
-                               ("\n".join(matches[:150]) if matches else "No matching package names found."))
+                    matches = []
+                    for line in result.stdout.splitlines():
+                        fields = line.split()
+                        if len(fields) >= 3 and query.casefold() in fields[1].casefold():
+                            matches.append((fields[1], fields[2]))
+                    error = ""
+                GLib.idle_add(self.display_search_results, query, matches[:150], error)
             except (OSError, subprocess.TimeoutExpired) as exc:
-                message = "Repository search unavailable: " + str(exc)
-            GLib.idle_add(self.finish_operation, message)
+                GLib.idle_add(self.display_search_results, query, [], "Repository search unavailable: " + str(exc))
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def display_search_results(self, query, matches, error):
+        self.busy = False
+        self.clear_results()
+        heading = Gtk.Label(label=f"OFFICIAL EXTRA SEARCH  //  {query}")
+        heading.set_xalign(0)
+        heading.add_css_class("heading")
+        self.results.append(heading)
+        back = Gtk.Button(label="Back to app catalog")
+        back.set_halign(Gtk.Align.START)
+        back.connect("clicked", lambda *_: self.show_catalog())
+        self.results.append(back)
+        if error:
+            self.set_status(error)
+        elif not matches:
+            self.set_status("No matching package names found in the official Extra repository.")
+        else:
+            self.set_status(f"{len(matches)} matching package(s) shown. Select Install to review the package transaction.")
+            for package, version in matches:
+                row = Gtk.Box(spacing=10)
+                details = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+                details.set_hexpand(True)
+                name = Gtk.Label(label=package)
+                name.set_xalign(0)
+                name.add_css_class("heading")
+                details.append(name)
+                version_label = Gtk.Label(label=f"Extra repository · {version}")
+                version_label.set_xalign(0)
+                version_label.add_css_class("dim-label")
+                details.append(version_label)
+                row.append(details)
+                install = Gtk.Button(label="Install…")
+                install.connect("clicked", lambda _b, p=package: self.confirm_install(p, p))
+                row.append(install)
+                self.results.append(row)
+        return False
 
     def installed(self, *_):
         self.run_async(["pacman", "-Q"], "Installed packages")
