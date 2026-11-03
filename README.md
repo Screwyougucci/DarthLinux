@@ -2,7 +2,7 @@
 
 **A lightweight, Arch Linux-based desktop distribution with a Sith-inspired identity and security-first defaults.**
 
-> **Project status: early development.** A Darth Linux 0.2 ISO was successfully generated and uploaded by [GitHub Actions run #11](https://github.com/Screwyougucci/DarthLinux/actions/runs/41524421900). Download the `darth-linux-live-iso` artifact from that run's **Artifacts** section. The ISO is a build artifact, not a published release, and it has not yet been confirmed to boot or install successfully. Treat it as experimental.
+ > **Project status: Darth Linux 0.5 preview.** The repository now builds a versioned `darth-linux-0.5` ISO. The current 0.5 image is experimental until the latest Actions build passes and the ISO is boot-tested in UEFI, BIOS, and a VM. It is not yet a stable release.
 
 ## Goals
 - Run well on older laptops and low-resource computers.
@@ -14,7 +14,7 @@
 - Include a broad toolkit for authorized network, web, wireless, forensics, and reverse-engineering lab work.
 - Include original Darth utilities with conservative, scope-limited defaults.
 - Provide lightweight system dashboards and on-demand antivirus tools.
-- Include a QEMU/KVM virtual machine manager, network diagnostics toolkit, and Mousepad notepad.
+- Include a QEMU/KVM virtual machine manager, network diagnostics toolkit, and Darth Notes.
 
 ## Visual identity
 Near-black graphite, crimson accents, and restrained tactical details. Artwork is original project branding, not affiliated with Lucasfilm, Disney, or Arch Linux.
@@ -47,11 +47,11 @@ The live profile includes a starter set of network, web, wireless-audit, forensi
 
 ## Darth Control Center and VPN
 
-The original GTK4 **Darth Control Center** brings together VM management, VPN settings/status, network diagnostics, antivirus, system monitoring, and Mousepad. VPN support includes native NetworkManager WireGuard and OpenVPN via its NetworkManager plugin; no VPN subscription or provider is bundled. See [docs/CONTROL-CENTER-VPN.md](docs/CONTROL-CENTER-VPN.md).
+The original GTK4 **Darth Control Center** brings together VM management, VPN settings/status, network diagnostics, antivirus, system monitoring, and Darth Notes. VPN support includes native NetworkManager WireGuard and OpenVPN via its NetworkManager plugin; no VPN subscription or provider is bundled. See [docs/CONTROL-CENTER-VPN.md](docs/CONTROL-CENTER-VPN.md).
 
 ## Virtual machines, network tools, and notepad
 
-The desktop image includes QEMU/KVM with Virtual Machine Manager, network troubleshooting tools, and Mousepad. VM use requires hardware virtualization support and sufficient memory; see [docs/VM-NETWORK-NOTES.md](docs/VM-NETWORK-NOTES.md) for setup and safe network-isolation guidance.
+The desktop image includes QEMU/KVM with Virtual Machine Manager, network troubleshooting tools, and Darth Notes. VM use requires hardware virtualization support and sufficient memory; see [docs/VM-NETWORK-NOTES.md](docs/VM-NETWORK-NOTES.md) for setup and safe network-isolation guidance.
 
 ## Dashboards and antivirus
 The XFCE profile includes lightweight system monitors, ClamAV, and ClamUI. Custom commands include `darth-center` and `darth-av-scan`; see [docs/SECURITY-TOOLKIT.md](docs/SECURITY-TOOLKIT.md). Real-time antivirus scanning is opt-in because of memory cost.
@@ -63,7 +63,7 @@ The XFCE profile includes lightweight system monitors, ClamAV, and ClamUI. Custo
 - `docs/TESTING.md` — validation checklist
 
 ## Testing status
-The ISO build itself has succeeded: [GitHub Actions run #11](https://github.com/Screwyougucci/DarthLinux/actions/runs/41524421900) produced the `darth-linux-live-iso` artifact. Download it from the run page's **Artifacts** section. The image has not yet been boot-tested; hardware compatibility, installer behavior, and encryption still need testing. See [docs/TESTING.md](docs/TESTING.md).
+A previous development ISO build succeeded, but that does not validate version 0.5. The 0.5 workflow checks Python and shell syntax, desktop entries, catalog integrity, firewall syntax, and builds the ISO. A successful CI build still does not prove the image boots, installs, updates, or supports every hardware configuration. See [docs/TESTING.md](docs/TESTING.md) and [the 0.5 preview notes](docs/DARTH-LINUX-0.5.md).
 
 ## License
 Unless otherwise noted, project source and original artwork are offered under the MIT License. Third-party components retain their own licenses.
@@ -84,7 +84,11 @@ Darth Settings adds dedicated Audio, Display, Video, Network, Security, and Syst
 
 Darth Linux includes **Darth AI Model Manager**, a GTK desktop utility for downloading GGUF models from Hugging Face and running them locally with llama.cpp. It supports CPU inference, local model storage, a loopback-only chat UI, and stop/start controls. See [docs/DARTH-AI-MANAGER.md](docs/DARTH-AI-MANAGER.md) for model selection, hardware guidance, and security notes.
 
-## Darth Linux 0.2 planning
+## Darth Linux 0.5 preview
 
-The 0.2 release is being planned as **The Security Awakening**, with Command Center, Sentinel Antivirus, Guardian Firewall, Desktop 2.0, Darth Store, Darth AI, Darth Red Lab, Darth Privacy, Darth Lockdown, Darth Recovery, Watchtower, and **Darth Driver Manager**. These are roadmap goals, not a claim that all features are implemented. See [docs/DARTH-WATCHTOWER-0.2.md](docs/DARTH-WATCHTOWER-0.2.md) for Watchtower's visual editions, analytics panels, customization features, and acceptance tests, and [docs/DARTH-DRIVER-MANAGER-0.2.md](docs/DARTH-DRIVER-MANAGER-0.2.md) for planned hardware detection, driver/firmware status, graphics guidance, safe package installation, and hardware validation.
+Version 0.5 focuses on a unified Darth desktop identity and a built-in Update Center. The login screen, boot splash, terminal, file-manager launcher, installer, Settings, and Control Center share the graphite/crimson theme and Darth icon. Settings can safely check Arch repository updates, preview packages, and request administrator approval for a complete `pacman -Syu` upgrade; it can also update per-user Flatpak apps when Flatpak is installed. Arch remains the package and system foundation. See [docs/DARTH-WATCHTOWER-0.2.md](docs/DARTH-WATCHTOWER-0.2.md) for Watchtower's visual editions, analytics panels, customization features, and acceptance tests, and [docs/DARTH-DRIVER-MANAGER-0.2.md](docs/DARTH-DRIVER-MANAGER-0.2.md) for planned hardware detection, driver/firmware status, graphics guidance, safe package installation, and hardware validation.
 \n## Darth Linux 0.3 — Hardware Compatibility\n\nVersion 0.3 starts with the read-only `darth-hwcheck` diagnostic. It reports basic system and device inventory, boot mode, memory, virtualization flags, and possible current-boot firmware/driver errors. It does not automatically change drivers. See [the 0.3 hardware compatibility plan and validation matrix](docs/DARTH-LINUX-0.3-HARDWARE-COMPATIBILITY.md). Physical hardware testing is still required before making compatibility claims.\n
+
+## Darth Update Center
+
+Open **Darth Settings → Updates** to check for package updates, inspect the pending package list, and apply a complete system upgrade after administrator authentication. The checker uses `checkupdates` from `pacman-contrib` so the preview does not partially update the live pacman database; installation uses `pacman -Syu` rather than an unsafe partial upgrade. If Flatpak is installed, the page also updates apps installed in the current user's Flatpak scope. System update logs are saved to `~/.local/state/darth-linux/system-update.log`.
