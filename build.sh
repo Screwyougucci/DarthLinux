@@ -4,6 +4,8 @@ ROOT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
 PROFILE_DIR="$ROOT_DIR/profiles/darth"
 WORK_DIR="$ROOT_DIR/work"
 OUT_DIR="$ROOT_DIR/out"
+VERSION="$(tr -d "[:space:]" < "$ROOT_DIR/VERSION")"
+[[ "$VERSION" =~ ^[0-9]+\.[0-9]+$ ]] || die "VERSION must be in major.minor format (for example 0.5)"
 BASE_PROFILE="/usr/share/archiso/configs/releng"
 
 die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
@@ -43,7 +45,7 @@ fi
 BIN_DIR="$TMP_PROFILE/airootfs/usr/local/bin"
 APP_DIR="$TMP_PROFILE/airootfs/usr/share/applications"
 mkdir -p "$BIN_DIR" "$APP_DIR"
-for tool in darth-audit darth-scope-scan darth-center darth-av-scan darth-control-center darth-proxy darth-ai-manager darth-settings darth-watchtower darth-driver-manager darth-hwcheck darth-store darth-guardian darth-sentinel darth-recovery darth-privacy darth-lockdown darth-redlab darth-notes darth-installer; do
+for tool in darth-audit darth-scope-scan darth-center darth-av-scan darth-control-center darth-proxy darth-ai-manager darth-settings darth-watchtower darth-driver-manager darth-hwcheck darth-store darth-guardian darth-sentinel darth-recovery darth-privacy darth-lockdown darth-redlab darth-notes darth-installer darth-terminal darth-files darth-installer-session; do
   [[ -f "$ROOT_DIR/tools/$tool" ]] || die "Missing custom tool: $tool"
   install -Dm755 "$ROOT_DIR/tools/$tool" "$BIN_DIR/$tool"
 done
@@ -92,12 +94,14 @@ ln -sf /usr/lib/systemd/system/lightdm.service "$TMP_PROFILE/airootfs/etc/system
 ln -sf /usr/lib/systemd/system/lightdm.service "$TMP_PROFILE/airootfs/etc/systemd/system/graphical.target.wants/lightdm.service"
 # Copy the project desktop defaults into the live user's skeleton.
 mkdir -p "$TMP_PROFILE/airootfs/etc/skel/Desktop"
+printf "Darth Linux %s\\n" "$VERSION" > "$TMP_PROFILE/airootfs/etc/darth-linux-release"
+printf "Darth Linux %s // Live System\\nAuthorized local use only.\\n\\n" "$VERSION" > "$TMP_PROFILE/airootfs/etc/issue"
 find "$TMP_PROFILE/airootfs/etc/skel" -type f -name '*.desktop' -exec chmod 755 {} +
-sed -i 's/^iso_label=.*/iso_label="DARTH_LINUX"/' "$TMP_PROFILE/profiledef.sh"
-sed -i 's/^iso_name=.*/iso_name="darth-linux"/' "$TMP_PROFILE/profiledef.sh"
+sed -i 's/^iso_label=.*/iso_label="DARTH_0_5"/' "$TMP_PROFILE/profiledef.sh"
+sed -i "s/^iso_name=.*/iso_name=\\"darth-linux-${VERSION}\\"/" "$TMP_PROFILE/profiledef.sh"
 sed -i 's/^iso_publisher=.*/iso_publisher="Darth Linux Project"/' "$TMP_PROFILE/profiledef.sh"
 sed -i 's/^iso_application=.*/iso_application="Darth Linux Live System"/' "$TMP_PROFILE/profiledef.sh"
 
-printf '\nBuilding Darth Linux from the official Archiso releng profile...\n'
+printf "\\nBuilding Darth Linux %s from the official Archiso releng profile...\\n" "$VERSION"
 mkarchiso -v -w "$WORK_DIR" -o "$OUT_DIR" "$TMP_PROFILE"
 printf '\nBuild finished. Check the ISO in: %s\n' "$OUT_DIR"
