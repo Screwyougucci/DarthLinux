@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "build.sh"
+      - "VERSION"
       - "profiles/**"
       - "tools/**"
       - "packaging/**"
@@ -47,7 +48,7 @@ jobs:
                 tools/darth-hwcheck tools/darth-privacy tools/darth-proxy \
                 tools/darth-recovery tools/darth-scope-scan tools/darth-sentinel \
                 tools/darth-settings tools/darth-store tools/darth-watchtower tools/darth-notes tools/check-desktop-config.py
-              for f in tools/darth-av-scan tools/darth-guardian tools/darth-lockdown tools/darth-redlab tools/darth-installer; do bash -n "$f"; done
+              for f in tools/darth-av-scan tools/darth-guardian tools/darth-lockdown tools/darth-redlab tools/darth-installer tools/darth-terminal tools/darth-files tools/darth-installer-session; do bash -n "$f"; done
               for f in packaging/*.desktop; do desktop-file-validate "$f"; done
               bash -n build.sh scripts/install-custom-tools.sh scripts/install-security-tools.sh
               python tools/darth-hwcheck --self-test
@@ -62,7 +63,7 @@ jobs:
       - name: Upload ISO and checksum
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: darth-linux-live-iso
+          name: darth-linux-0.5-live-iso
           path: |
             out/*.iso
             out/SHA256SUMS
