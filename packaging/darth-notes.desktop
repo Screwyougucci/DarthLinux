@@ -3,6 +3,6 @@ Type=Application
 Name=Darth Notes
 Comment=Lightweight plain-text editor
 Exec=darth-notes
-Icon=accessories-text-editor
+Icon=darth-linux
 Terminal=false
 Categories=Utility;TextEditor;
