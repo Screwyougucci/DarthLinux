@@ -98,10 +98,10 @@ printf "Darth Linux %s\n" "$VERSION" > "$TMP_PROFILE/airootfs/etc/darth-linux-re
 printf "Darth Linux %s // Live System\nAuthorized local use only.\n\n" "$VERSION" > "$TMP_PROFILE/airootfs/etc/issue"
 find "$TMP_PROFILE/airootfs/etc/skel" -type f -name '*.desktop' -exec chmod 755 {} +
 sed -i 's/^iso_label=.*/iso_label="DARTH_0_5"/' "$TMP_PROFILE/profiledef.sh"
-sed -i "s/^iso_name=.*/iso_name=\\"darth-linux-${VERSION}\\"/" "$TMP_PROFILE/profiledef.sh"
+sed -i "s|^iso_name=.*|iso_name=\"darth-linux-${VERSION}\"|" "$TMP_PROFILE/profiledef.sh"
 sed -i 's/^iso_publisher=.*/iso_publisher="Darth Linux Project"/' "$TMP_PROFILE/profiledef.sh"
 sed -i 's/^iso_application=.*/iso_application="Darth Linux Live System"/' "$TMP_PROFILE/profiledef.sh"
 
-printf "\\nBuilding Darth Linux %s from the official Archiso releng profile...\\n" "$VERSION"
+printf '\nBuilding Darth Linux %s from the official Archiso releng profile...\n' "$VERSION"
 mkarchiso -v -w "$WORK_DIR" -o "$OUT_DIR" "$TMP_PROFILE"
 printf '\nBuild finished. Check the ISO in: %s\n' "$OUT_DIR"
