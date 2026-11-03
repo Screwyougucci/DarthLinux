@@ -14,20 +14,48 @@ CATALOG = [
     ("Graphics", "GIMP", "gimp", "Image editing and photo retouching"),
     ("Graphics", "Inkscape", "inkscape", "Vector graphics and illustration"),
     ("Graphics", "Krita", "krita", "Digital painting and illustration"),
+    ("Graphics", "Darktable", "darktable", "RAW photo development"),
+    ("Graphics", "Shotwell", "shotwell", "Photo library organizer"),
     ("3D & Video", "Blender", "blender", "3D modeling, animation and rendering"),
     ("3D & Video", "OBS Studio", "obs-studio", "Screen recording and live streaming"),
     ("3D & Video", "Kdenlive", "kdenlive", "Non-linear video editing"),
-    ("Audio", "Audacity", "audacity", "Multi-track audio recording and editing"),
-    ("Office", "LibreOffice", "libreoffice-fresh", "Open-source office suite"),
+    ("3D & Video", "HandBrake", "handbrake", "Video conversion"),
+    ("Audio", "Audacity", "audacity", "Audio recording and editing"),
+    ("Audio", "Ardour", "ardour", "Digital audio workstation"),
+    ("Office", "LibreOffice", "libreoffice-fresh", "Full office suite"),
     ("Internet", "Chromium", "chromium", "Open-source web browser"),
     ("Internet", "Thunderbird", "thunderbird", "Email, calendar and contacts"),
-    ("Internet", "qBittorrent", "qbittorrent", "Open-source BitTorrent client"),
-    ("Media", "VLC", "vlc", "Play a wide range of audio and video formats"),
-    ("Media", "HandBrake", "handbrake", "Convert video files"),
+    ("Internet", "qBittorrent", "qbittorrent", "BitTorrent client"),
+    ("Internet", "Transmission", "transmission-gtk", "Lightweight BitTorrent client"),
+    ("Media", "VLC", "vlc", "Audio and video player"),
+    ("Media", "MPV", "mpv", "Lightweight media player"),
     ("Privacy", "KeePassXC", "keepassxc", "Local password manager"),
     ("Files", "FileZilla", "filezilla", "FTP, FTPS and SFTP client"),
     ("Files", "Calibre", "calibre", "E-book library manager"),
+    ("Files", "7-Zip", "7zip", "File archiver"),
+    ("Files", "Zathura", "zathura", "Minimal document viewer"),
+    ("Files", "GParted", "gparted", "Partition editor"),
+    ("Files", "Meld", "meld", "Visual file and folder comparison"),
+    ("Files", "Remmina", "remmina", "Remote desktop client"),
+    ("Developer", "Geany", "geany", "Fast lightweight IDE"),
+    ("Developer", "Gitg", "gitg", "Graphical Git repository viewer"),
     ("Sync", "Syncthing", "syncthing", "Continuous file synchronization"),
+    ("Sync", "Warpinator", "warpinator", "Local network file transfer"),
+]
+FLATPAK_CATALOG = [
+    ("Firefox", "org.mozilla.firefox"),
+    ("GIMP", "org.gimp.GIMP"),
+    ("Inkscape", "org.inkscape.Inkscape"),
+    ("Krita", "org.kde.krita"),
+    ("Blender", "org.blender.Blender"),
+    ("OBS Studio", "com.obsproject.Studio"),
+    ("Audacity", "org.audacityteam.Audacity"),
+    ("LibreOffice", "org.libreoffice.LibreOffice"),
+    ("VLC", "org.videolan.VLC"),
+    ("Kdenlive", "org.kde.kdenlive"),
+    ("KeePassXC", "org.keepassxc.KeePassXC"),
+    ("qBittorrent", "org.qbittorrent.qBittorrent"),
+    ("Evince PDF Reader", "org.gnome.Evince"),
 ]
 
 PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9@._+:-]{0,127}$")
@@ -78,6 +106,9 @@ class Store(Gtk.Application):
         installed_button = Gtk.Button(label="Installed packages")
         installed_button.connect("clicked", self.installed)
         search_row.append(installed_button)
+        flathub_button = Gtk.Button(label="Enable Flathub (optional)")
+        flathub_button.connect("clicked", self.enable_flathub)
+        search_row.append(flathub_button)
 
         self.status = Gtk.Label(label="Choose an app below or search the official repositories.")
         self.status.set_xalign(0)
@@ -130,6 +161,22 @@ class Store(Gtk.Application):
             row.append(details)
             button = Gtk.Button(label="Install…")
             button.connect("clicked", lambda _b, p=package, n=name: self.confirm_install(p, n))
+            row.append(button)
+            self.results.append(row)
+
+        heading = Gtk.Label(label="OPTIONAL FLATHUB APPS")
+        heading.set_xalign(0)
+        heading.add_css_class("heading")
+        self.results.append(heading)
+        for name, app_id in FLATPAK_CATALOG:
+            row = Gtk.Box(spacing=10)
+            label = Gtk.Label(label=f"{name}  ·  {app_id}")
+            label.set_xalign(0)
+            label.set_hexpand(True)
+            label.set_wrap(True)
+            row.append(label)
+            button = Gtk.Button(label="Install via Flatpak…")
+            button.connect("clicked", lambda _b, n=name, a=app_id: self.confirm_flatpak(n, a))
             row.append(button)
             self.results.append(row)
 
@@ -192,6 +239,84 @@ class Store(Gtk.Application):
 
     def installed(self, *_):
         self.run_async(["pacman", "-Q"], "Installed packages")
+
+    def enable_flathub(self, *_):
+        if self.busy:
+            self.set_status("Wait for the current package operation to finish.")
+            return
+        self.busy = True
+        self.set_status("Setting up optional Flathub support…")
+
+        def worker():
+            try:
+                if not shutil_which("flatpak"):
+                    install = subprocess.run(
+                        ["pkexec", "pacman", "-S", "--needed", "--", "extra/flatpak"],
+                        text=True, capture_output=True, timeout=1800, check=False
+                    )
+                    if install.returncode != 0:
+                        raise RuntimeError((install.stderr or install.stdout or "Flatpak installation was cancelled.")[-8000:])
+                add = subprocess.run(
+                    ["flatpak", "remote-add", "--user", "--if-not-exists", "flathub",
+                     "https://flathub.org/repo/flathub.flatpakrepo"],
+                    text=True, capture_output=True, timeout=180, check=False
+                )
+                if add.returncode != 0:
+                    raise RuntimeError((add.stderr or add.stdout or "Could not add Flathub.")[-8000:])
+                message = "Flathub is enabled for this user. Apps are downloaded only when you choose to install them."
+            except (OSError, subprocess.TimeoutExpired, RuntimeError) as exc:
+                message = "Flathub setup failed: " + str(exc)
+            GLib.idle_add(self.finish_operation, message)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def confirm_flatpak(self, name, app_id):
+        if self.busy:
+            self.set_status("Wait for the current package operation to finish.")
+            return
+        if not shutil_which("flatpak"):
+            self.set_status("Select Enable Flathub first. Flatpak is optional and is not preinstalled.")
+            return
+        dialog = Gtk.MessageDialog(
+            transient_for=self.win, modal=True, message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.YES_NO, text=f"Install {name} from Flathub?"
+        )
+        dialog.set_secondary_text(
+            f"Application ID: {app_id}\\nInstalls into your user account using Flatpak's sandboxed app format. "
+            "The first install may download a shared runtime."
+        )
+
+        def answer(dlg, response):
+            dlg.destroy()
+            if response != Gtk.ResponseType.YES:
+                return
+            if self.busy:
+                self.set_status("Another package operation is already running.")
+                return
+            self.busy = True
+            self.set_status(f"Downloading {name} from Flathub…")
+
+            def worker():
+                try:
+                    remotes = subprocess.run(["flatpak", "remotes", "--user", "--columns=name"],
+                                             text=True, capture_output=True, timeout=30, check=False)
+                    if remotes.returncode != 0 or "flathub" not in remotes.stdout.split():
+                        raise RuntimeError("Flathub is not enabled. Select Enable Flathub first.")
+                    result = subprocess.run(
+                        ["flatpak", "install", "--user", "--noninteractive", "flathub", app_id],
+                        text=True, capture_output=True, timeout=1800, check=False
+                    )
+                    output = (result.stdout or "") + (result.stderr or "")
+                    message = (f"Installed {name}." if result.returncode == 0 else
+                               f"Flatpak install failed (exit {result.returncode}).\\n{output[-10000:]}")
+                except (OSError, subprocess.TimeoutExpired, RuntimeError) as exc:
+                    message = "Flatpak install failed: " + str(exc)
+                GLib.idle_add(self.finish_operation, message)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        dialog.connect("response", answer)
+        dialog.present()
 
     def confirm_install(self, package, display_name=None):
         if self.busy:
