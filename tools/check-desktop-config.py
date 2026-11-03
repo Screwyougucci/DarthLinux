@@ -56,7 +56,7 @@ store = (ROOT / "tools/darth-store").read_text(encoding="utf-8")
 for token in ("SEARCH_RE", "OFFICIAL_REPOSITORIES", '"pacman", "-Ss"', "re.escape(query)"):
     if token not in store:
         sys.exit(f"Darth Store search regression: missing {token}")
-header = re.compile(r"^([A-Za-z0-9_-]+)/([A-Za-z0-9@._+:-]+)\\s+(\\S+)(?:\\s+\\[installed\\])?$")
+header = re.compile(r"^([A-Za-z0-9_-]+)/([A-Za-z0-9@._+:-]+)\s+(\\S+)(?:\s+\\[installed\\])?$")
 sample = "extra/firefox 145.0-1 [installed]"
 match = header.fullmatch(sample)
 if not match or match.group(1) != "extra" or match.group(2) != "firefox":
