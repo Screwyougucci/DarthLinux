@@ -2,7 +2,7 @@
 
 **A lightweight, Arch Linux-based desktop distribution with a Sith-inspired identity and security-first defaults.**
 
- > **Project status: Darth Linux 0.5 preview.** The repository now builds a versioned `darth-linux-0.5` ISO. The current 0.5 image is experimental until the latest Actions build passes and the ISO is boot-tested in UEFI, BIOS, and a VM. It is not yet a stable release.
+> **Project status: Darth Linux 0.5 preview.** The repository now builds a versioned `darth-linux-0.5` ISO. The current 0.5 image is experimental until the latest Actions build passes and the ISO is boot-tested in UEFI, BIOS, and a VM. It is not yet a stable release.
 
 ## Goals
 - Run well on older laptops and low-resource computers.
@@ -78,7 +78,7 @@ Darth Linux is configured to boot to a graphical LightDM login and XFCE desktop.
 
 ## Expanded System Settings
 
-Darth Settings adds dedicated Audio, Display, Video, Network, Security, and System pages. It includes output-volume and mute controls through PipeWire, microphone/device configuration through the audio mixer, display configuration, laptop brightness shortcuts, webcam controls, MPV playback, and system/network utilities. Hardware-dependent controls require supported devices and permissions. See [docs/DARTH-SETTINGS.md](docs/DARTH-SETTINGS.md).
+Darth Settings adds dedicated Updates, Audio, Display, Video, Network, Security, and System pages. It includes output-volume and mute controls through PipeWire, microphone/device configuration through the audio mixer, display configuration, laptop brightness shortcuts, webcam controls, MPV playback, and system/network utilities. Hardware-dependent controls require supported devices and permissions. See [docs/DARTH-SETTINGS.md](docs/DARTH-SETTINGS.md).
 
 ## Local AI Model Manager
 
@@ -87,7 +87,10 @@ Darth Linux includes **Darth AI Model Manager**, a GTK desktop utility for downl
 ## Darth Linux 0.5 preview
 
 Version 0.5 focuses on a unified Darth desktop identity and a built-in Update Center. The login screen, boot splash, terminal, file-manager launcher, installer, Settings, and Control Center share the graphite/crimson theme and Darth icon. Settings can safely check Arch repository updates, preview packages, and request administrator approval for a complete `pacman -Syu` upgrade; it can also update per-user Flatpak apps when Flatpak is installed. Arch remains the package and system foundation. See [docs/DARTH-WATCHTOWER-0.2.md](docs/DARTH-WATCHTOWER-0.2.md) for Watchtower's visual editions, analytics panels, customization features, and acceptance tests, and [docs/DARTH-DRIVER-MANAGER-0.2.md](docs/DARTH-DRIVER-MANAGER-0.2.md) for planned hardware detection, driver/firmware status, graphics guidance, safe package installation, and hardware validation.
-\n## Darth Linux 0.3 — Hardware Compatibility\n\nVersion 0.3 starts with the read-only `darth-hwcheck` diagnostic. It reports basic system and device inventory, boot mode, memory, virtualization flags, and possible current-boot firmware/driver errors. It does not automatically change drivers. See [the 0.3 hardware compatibility plan and validation matrix](docs/DARTH-LINUX-0.3-HARDWARE-COMPATIBILITY.md). Physical hardware testing is still required before making compatibility claims.\n
+
+## Darth Linux 0.3 — Hardware Compatibility
+
+Version 0.3 starts with the read-only `darth-hwcheck` diagnostic. It reports basic system and device inventory, boot mode, memory, virtualization flags, and possible current-boot firmware/driver errors. It does not automatically change drivers. See [the 0.3 hardware compatibility plan and validation matrix](docs/DARTH-LINUX-0.3-HARDWARE-COMPATIBILITY.md). Physical hardware testing is still required before making compatibility claims.\n
 
 ## Darth Update Center
 
