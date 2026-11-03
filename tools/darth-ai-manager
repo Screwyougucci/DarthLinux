@@ -211,6 +211,9 @@ class AIManager(Gtk.Application):
         return GLib.SOURCE_REMOVE
 
     def open_chat(self, *_):
+        if not self.server_proc or self.server_proc.poll() is not None:
+            self.status.set_text("Start a local model first; the chat page is available only while llama-server is running.")
+            return
         try:
             subprocess.Popen(["xdg-open", "http://127.0.0.1:" + str(SERVER_PORT)])
         except OSError as exc:
