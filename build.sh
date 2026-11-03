@@ -23,11 +23,11 @@ cp -a "$PROFILE_DIR/airootfs/." "$TMP_PROFILE/airootfs/"
 BIN_DIR="$TMP_PROFILE/airootfs/usr/local/bin"
 APP_DIR="$TMP_PROFILE/airootfs/usr/share/applications"
 mkdir -p "$BIN_DIR" "$APP_DIR"
-for tool in darth-audit darth-scope-scan darth-center darth-av-scan darth-control-center darth-proxy darth-ai-manager darth-settings darth-watchtower darth-driver-manager darth-hwcheck darth-store darth-guardian darth-sentinel darth-recovery darth-privacy darth-lockdown darth-redlab; do
+for tool in darth-audit darth-scope-scan darth-center darth-av-scan darth-control-center darth-proxy darth-ai-manager darth-settings darth-watchtower darth-driver-manager darth-hwcheck darth-store darth-guardian darth-sentinel darth-recovery darth-privacy darth-lockdown darth-redlab darth-notes; do
   [[ -f "$ROOT_DIR/tools/$tool" ]] || die "Missing custom tool: $tool"
   install -Dm755 "$ROOT_DIR/tools/$tool" "$BIN_DIR/$tool"
 done
-for desktop in darth-control-center.desktop darth-ai-manager.desktop darth-settings.desktop darth-watchtower.desktop darth-driver-manager.desktop darth-store.desktop; do
+for desktop in darth-control-center.desktop darth-ai-manager.desktop darth-settings.desktop darth-watchtower.desktop darth-driver-manager.desktop darth-store.desktop darth-notes.desktop; do
   [[ -f "$ROOT_DIR/packaging/$desktop" ]] || die "Missing desktop entry: $desktop"
   install -Dm644 "$ROOT_DIR/packaging/$desktop" "$APP_DIR/$desktop"
 done
