@@ -23,6 +23,10 @@ class SecurityRegressionTests(unittest.TestCase):
         self.assertNotIn("timeout=1800", store)
         self.assertNotIn("Package operation timed out after 30 minutes.", store)
 
+    def test_rootkit_indicator_does_not_claim_a_scan_was_run(self):
+        dashboard = (ROOT / "tools/darth-center").read_text()
+        self.assertIn("Rootkit scanner binary (not scan status)", dashboard)
+
 
 if __name__ == "__main__":
     unittest.main()
