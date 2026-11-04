@@ -55,6 +55,7 @@ jobs:
               bash -n build.sh scripts/install-custom-tools.sh scripts/install-security-tools.sh
               python tools/darth-hwcheck --self-test
               python tools/check-store-catalog.py
+              python tools/test-security-regressions.py
               python tools/check-desktop-config.py
               nft -c -f profiles/darth/airootfs/etc/nftables.conf
               bash ./build.sh
