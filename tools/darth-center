@@ -60,7 +60,7 @@ def main():
         print(f" ClamAV daemon:       {command(['systemctl','is-active','clamav-daemon'])}")
         print(f" Signature updater:   {command(['systemctl','is-active','clamav-freshclam'])}")
         print(f" AV definitions:      {clam_db_time()}")
-        print(f" Rootkit checker:     {'installed' if shutil.which('rkhunter') else 'not installed'}")
+        print(f" Rootkit scanner binary (not scan status): {'available' if shutil.which('rkhunter') else 'not installed'}")
         print("\nRefresh: 3 seconds | Press Ctrl+C to exit")
         time.sleep(3)
 
