@@ -18,7 +18,7 @@ check-sources:
 	@echo "Source directories found. Compatibility/configuration is not yet validated."
 
 build: check-host
-	JOBS=${JOBS:-2} bash ../scripts/build-sandcastle.sh
+	JOBS="${JOBS:-2}" bash ../scripts/build-sandcastle.sh
 
 clean:
 	rm -rf ../out/sandcastle ../out/artifacts
