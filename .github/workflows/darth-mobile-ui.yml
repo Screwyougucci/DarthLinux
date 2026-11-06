@@ -47,6 +47,7 @@ jobs:
         run: |
           file mobile/ipod-touch-7/ui/darth-shell
           readelf -h mobile/ipod-touch-7/ui/darth-shell | grep -E 'Machine:.*AArch64'
+          python3 mobile/ipod-touch-7/scripts/check-elf-16k.py mobile/ipod-touch-7/ui/darth-shell
           readelf -l mobile/ipod-touch-7/ui/darth-shell
       - name: Upload AArch64 prototype build
         uses: actions/upload-artifact@v4
