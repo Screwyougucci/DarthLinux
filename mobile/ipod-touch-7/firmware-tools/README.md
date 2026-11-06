@@ -29,8 +29,10 @@ python3 mobile/ipod-touch-7/firmware-tools/extract-n112-firmware.py --ipsw-url "
 ```
 
 If the IPSW uses a different rootfs DMG name, pass its exact ZIP entry with
---dmg. The extracted file is written to
-mobile/ipod-touch-7/firmware/N112.mtprops by default. It is ignored by Git
+--dmg. The verified iOS 15.8.8 (19H422) extraction is 86,448 bytes with SHA-256
+`e599bb27ffd005ece0fbcdb6accab5aa23bc1a4765d81aa41ad2e4d1644f4e11`.
+The extracted file is written to mobile/ipod-touch-7/firmware/N112.mtprops
+by default. It is ignored by Git
 because it is Apple firmware; do not commit it, publish it, or upload it as a
 public CI artifact.
 
