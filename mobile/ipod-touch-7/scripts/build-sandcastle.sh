@@ -38,6 +38,8 @@ cp "$ROOT_DIR/buildroot/package/darth-mobile-shell/Config.in" "$BUILDROOT_DIR/pa
 cp "$ROOT_DIR/buildroot/package/darth-mobile-shell/darth-mobile-shell.mk" "$BUILDROOT_DIR/package/darth-mobile-shell/darth-mobile-shell.mk"
 mkdir -p "$BUILDROOT_DIR/package/m4"
 cp "$ROOT_DIR/buildroot/patches/m4/0003-c-stack-stop-using-SIGSTKSZ.patch" "$BUILDROOT_DIR/package/m4/0003-c-stack-stop-using-SIGSTKSZ.patch"
+mkdir -p "$BUILDROOT_DIR/package/fakeroot"
+cp "$ROOT_DIR"/buildroot/patches/fakeroot/*.patch "$BUILDROOT_DIR/package/fakeroot/"
 mkdir -p "$BUILDROOT_DIR/board/darth-mobile"
 cp "$ROOT_DIR/buildroot/post-build.sh" "$BUILDROOT_DIR/board/darth-mobile/post-build.sh"
 chmod 0755 "$BUILDROOT_DIR/board/darth-mobile/post-build.sh"
@@ -136,7 +138,7 @@ grep -q '^BR2_LINUX_KERNEL_DTS_SUPPORT=y$' "$BUILDROOT_DIR/.config"
 grep -q '^BR2_LINUX_KERNEL_INTREE_DTS_NAME="hx/hx-h9p-n112"$' "$BUILDROOT_DIR/.config"
 
 # Re-extract host-m4 so the compatibility patch is applied even on incremental runs.
-make -C "$BUILDROOT_DIR" host-m4-dirclean
+make -C "$BUILDROOT_DIR" host-m4-dirclean host-fakeroot-dirclean
 make -C "$BUILDROOT_DIR" -j"$JOBS" DART_MOBILE_SOURCE_DIR="$ROOT_DIR"
 
 mkdir -p "$ARTIFACT_DIR"
