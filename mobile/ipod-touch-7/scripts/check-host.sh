@@ -7,7 +7,7 @@ if [ "$(uname -s)" != "Linux" ]; then
 fi
 
 missing=0
-for tool in bash git make gcc g++ python3 wget cpio rsync bc perl file readelf sha256sum unzip tar patch gzip bzip2 xz flex bison awk sed find pkg-config; do
+for tool in bash git make gcc g++ python3 wget cpio rsync bc perl file readelf sha256sum unzip tar patch gzip bzip2 xz flex bison awk sed find pkg-config which; do
   if command -v "$tool" >/dev/null 2>&1; then
     printf 'OK      %s\n' "$tool"
   else
