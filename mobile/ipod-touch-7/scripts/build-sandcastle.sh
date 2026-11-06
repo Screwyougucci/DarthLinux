@@ -72,8 +72,6 @@ replacements = {
         f'BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="{kernel_sha}"',
     '# BR2_LINUX_KERNEL_DTS_SUPPORT is not set':
         'BR2_LINUX_KERNEL_DTS_SUPPORT=y',
-    'BR2_LINUX_KERNEL_INTREE_DTS_NAME=""':
-        'BR2_LINUX_KERNEL_INTREE_DTS_NAME="hx/hx-h9p-n112"',
     'BR2_ROOTFS_POST_BUILD_SCRIPT=""':
         'BR2_ROOTFS_POST_BUILD_SCRIPT="board/darth-mobile/post-build.sh"',
     'BR2_PACKAGE_XORG7=y': '# BR2_PACKAGE_XORG7 is not set',
@@ -85,7 +83,24 @@ for old, new in replacements.items():
     if old not in text:
         raise SystemExit(f"Expected upstream config entry not found: {old}")
     text = text.replace(old, new, 1)
-text += '\nBR2_PACKAGE_DARTH_MOBILE_SHELL=y\n'
+
+# The historical Sandcastle .config does not contain DTS name settings because
+# DTS generation was disabled. Replace both optional symbols explicitly.
+lines = []
+for line in text.splitlines():
+    if line == "# BR2_LINUX_KERNEL_DTS_SUPPORT is not set":
+        continue
+    if line.startswith("BR2_LINUX_KERNEL_DTS_SUPPORT="):
+        continue
+    if line.startswith("BR2_LINUX_KERNEL_INTREE_DTS_NAME="):
+        continue
+    if line == "# BR2_LINUX_KERNEL_INTREE_DTS_NAME is not set":
+        continue
+    lines.append(line)
+text = "\n".join(lines).rstrip() + '\n'
+text += 'BR2_LINUX_KERNEL_DTS_SUPPORT=y\n'
+text += 'BR2_LINUX_KERNEL_INTREE_DTS_NAME="hx/hx-h9p-n112"\n'
+text += 'BR2_PACKAGE_DARTH_MOBILE_SHELL=y\n'
 path.write_text(text)
 PY
 
