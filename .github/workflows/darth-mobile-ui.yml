@@ -28,3 +28,29 @@ jobs:
         run: make -C mobile/ipod-touch-7/ui clean all
       - name: Run renderer self-test
         run: make -C mobile/ipod-touch-7/ui test
+
+  arm64-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Install AArch64 cross compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+      - name: Compile AArch64 prototype with 16 KiB ELF page alignment
+        run: |
+          make -C mobile/ipod-touch-7/ui clean all \
+            CC=aarch64-linux-gnu-gcc \
+            LDFLAGS="-Wl,-z,common-page-size=0x4000 -Wl,-z,max-page-size=0x4000"
+      - name: Verify AArch64 ELF and load segment alignment
+        run: |
+          file mobile/ipod-touch-7/ui/darth-shell
+          readelf -h mobile/ipod-touch-7/ui/darth-shell | grep -E 'Machine:.*AArch64'
+          readelf -l mobile/ipod-touch-7/ui/darth-shell
+      - name: Upload AArch64 prototype build
+        uses: actions/upload-artifact@v4
+        with:
+          name: darth-mobile-shell-aarch64-prototype
+          path: mobile/ipod-touch-7/ui/darth-shell
+          if-no-files-found: error
