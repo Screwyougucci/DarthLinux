@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <linux/fb.h>
 #include <linux/input.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,10 +20,21 @@ struct surface {
     size_t length;
 };
 
+static volatile sig_atomic_t running = 1;
+
+static void stop_handler(int signal_number) {
+    (void)signal_number;
+    running = 0;
+}
+
 static uint32_t channel(uint8_t value, struct fb_bitfield field) {
-    if (field.length == 0U) return 0U;
-    uint32_t max = (1U << field.length) - 1U;
-    return (((uint32_t)value * max + 127U) / 255U) << field.offset;
+    if (field.length == 0U || field.length > 32U ||
+        field.offset >= 32U || field.length + field.offset > 32U)
+        return 0U;
+    uint64_t max = field.length == 32U
+        ? UINT32_MAX : ((UINT64_C(1) << field.length) - 1U);
+    return (uint32_t)((((uint64_t)value * max + 127U) / 255U)
+                      << field.offset);
 }
 
 static uint32_t pack_rgb(const struct fb_var_screeninfo *v,
@@ -34,17 +46,27 @@ static uint32_t pack_rgb(const struct fb_var_screeninfo *v,
 static void put_pixel(struct surface *s, int x, int y, uint32_t color) {
     if (x < 0 || y < 0 || (uint32_t)x >= s->width ||
         (uint32_t)y >= s->height) return;
-    uint8_t *p = s->pixels + (size_t)y * s->stride +
-                 (size_t)x * (s->bpp / 8U);
-    for (uint32_t i = 0; i < s->bpp / 8U; ++i)
+    size_t bytes = s->bpp / 8U;
+    size_t row = (size_t)y * s->stride;
+    size_t col = (size_t)x * bytes;
+    if (bytes == 0U || row > s->length || col > s->length - row ||
+        bytes > s->length - row - col) return;
+    uint8_t *p = s->pixels + row + col;
+    for (size_t i = 0; i < bytes; ++i)
         p[i] = (uint8_t)(color >> (i * 8U));
 }
 
 static void rect(struct surface *s, int x, int y, int w, int h,
                  uint32_t color) {
     if (w <= 0 || h <= 0) return;
-    for (int yy = y; yy < y + h; ++yy)
-        for (int xx = x; xx < x + w; ++xx)
+    int64_t right = (int64_t)x + w;
+    int64_t bottom = (int64_t)y + h;
+    int x0 = x < 0 ? 0 : x;
+    int y0 = y < 0 ? 0 : y;
+    int x1 = right > s->width ? (int)s->width : (int)right;
+    int y1 = bottom > s->height ? (int)s->height : (int)bottom;
+    for (int yy = y0; yy < y1; ++yy)
+        for (int xx = x0; xx < x1; ++xx)
             put_pixel(s, xx, yy, color);
 }
 
@@ -116,26 +138,42 @@ static int self_test(void) {
     v.red.offset = 11; v.red.length = 5;
     v.green.offset = 5; v.green.length = 6;
     v.blue.offset = 0; v.blue.length = 5;
-    uint32_t red = pack_rgb(&v, 255, 0, 0);
-    uint32_t green = pack_rgb(&v, 0, 255, 0);
-    uint32_t blue = pack_rgb(&v, 0, 0, 255);
-    if (red != 0xf800U || green != 0x07e0U || blue != 0x001fU) {
+    if (pack_rgb(&v, 255, 0, 0) != 0xf800U ||
+        pack_rgb(&v, 0, 255, 0) != 0x07e0U ||
+        pack_rgb(&v, 0, 0, 255) != 0x001fU) {
         fputs("FAIL: RGB565 packing\n", stderr);
         return 1;
     }
-    struct surface s;
-    memset(&s, 0, sizeof(s));
-    uint8_t pixels[32 * 32 * 4];
-    memset(pixels, 0, sizeof(pixels));
-    s.pixels = pixels; s.width = 32; s.height = 32;
-    s.stride = 32 * 4; s.bpp = 32;
-    put_pixel(&s, 31, 31, 0x12345678U);
-    if (pixels[(31U * 32U + 31U) * 4U] != 0x78U) {
-        fputs("FAIL: framebuffer bounds/pixel write\n", stderr);
+
+    memset(&v, 0, sizeof(v));
+    v.red.offset = 16; v.red.length = 8;
+    v.green.offset = 8; v.green.length = 8;
+    v.blue.offset = 0; v.blue.length = 8;
+    if (pack_rgb(&v, 0x12, 0x34, 0x56) != 0x00123456U) {
+        fputs("FAIL: 32-bit RGB packing\n", stderr);
         return 1;
     }
+
+    uint8_t pixels[32U * 32U * 4U];
+    memset(pixels, 0, sizeof(pixels));
+    struct surface s;
+    memset(&s, 0, sizeof(s));
+    s.pixels = pixels; s.width = 32; s.height = 32;
+    s.stride = 32U * 4U; s.bpp = 32; s.length = sizeof(pixels);
+    put_pixel(&s, 31, 31, 0x12345678U);
+    if (pixels[(31U * 32U + 31U) * 4U] != 0x78U) {
+        fputs("FAIL: last valid framebuffer pixel\n", stderr);
+        return 1;
+    }
+    uint8_t before = pixels[0];
     put_pixel(&s, 32, 31, 0xffffffffU);
-    puts("PASS: RGB565 packing and bounded framebuffer pixel writes");
+    if (pixels[0] != before) {
+        fputs("FAIL: out-of-bounds pixel write\n", stderr);
+        return 1;
+    }
+    s.length = 4U;
+    put_pixel(&s, 1, 1, 0xffffffffU);
+    puts("PASS: RGB565/RGB888 packing and bounded framebuffer writes");
     return 0;
 }
 
@@ -150,9 +188,15 @@ static int open_framebuffer(const char *path, struct surface *s, int *fd) {
     s->width = s->var.xres; s->height = s->var.yres;
     s->bpp = s->var.bits_per_pixel; s->stride = fix.line_length;
     s->length = fix.smem_len;
-    if (s->width == 0U || s->height == 0U ||
-        (s->bpp != 16U && s->bpp != 24U && s->bpp != 32U)) {
-        fputs("Unsupported framebuffer geometry or pixel depth\n", stderr);
+    size_t bytes = s->bpp / 8U;
+    uint64_t minimum_stride = (uint64_t)s->width * bytes;
+    uint64_t minimum_length = (uint64_t)s->stride * s->height;
+    if (fix.visual != FB_VISUAL_TRUECOLOR ||
+        s->width == 0U || s->height == 0U ||
+        (s->bpp != 16U && s->bpp != 24U && s->bpp != 32U) ||
+        s->stride < minimum_stride || s->length == 0U ||
+        minimum_length > s->length) {
+        fputs("Unsupported or unsafe framebuffer geometry/format\n", stderr);
         close(*fd); return -1;
     }
     s->pixels = mmap(NULL, s->length, PROT_READ | PROT_WRITE,
@@ -161,35 +205,43 @@ static int open_framebuffer(const char *path, struct surface *s, int *fd) {
     return 0;
 }
 
-static void touch_loop(struct surface *s, const char *input, int input_fd) {
+static int touch_loop(struct surface *s, int input_fd) {
     struct input_absinfo ax, ay;
-    int have_axes = ioctl(input_fd, EVIOCGABS(ABS_X), &ax) == 0 &&
-                    ioctl(input_fd, EVIOCGABS(ABS_Y), &ay) == 0 &&
-                    ax.maximum > ax.minimum && ay.maximum > ay.minimum;
-    if (!have_axes) {
-        fputs("Touch axis ranges unavailable; showing static launcher.\n", stderr);
-        return;
+    if (ioctl(input_fd, EVIOCGABS(ABS_X), &ax) < 0 ||
+        ioctl(input_fd, EVIOCGABS(ABS_Y), &ay) < 0 ||
+        ax.maximum <= ax.minimum || ay.maximum <= ay.minimum) {
+        fputs("Touch axis ranges unavailable; launcher remains static.\n", stderr);
+        return -1;
     }
-    int selected = 0, down = 0;
+    int selected = 0, down = 0, tx = ax.minimum, ty = ay.minimum;
     struct input_event ev;
     render(s, selected);
-    while (read(input_fd, &ev, sizeof(ev)) == (ssize_t)sizeof(ev)) {
-        if (ev.type == EV_KEY && ev.code == BTN_TOUCH) down = ev.value != 0;
-        if (ev.type == EV_ABS && down && (ev.code == ABS_X || ev.code == ABS_Y)) {
-            static int tx = 0, ty = 0;
+    while (running) {
+        ssize_t count = read(input_fd, &ev, sizeof(ev));
+        if (count < 0 && errno == EINTR) continue;
+        if (count != (ssize_t)sizeof(ev)) {
+            if (count < 0) perror("read touch input");
+            break;
+        }
+        if (ev.type == EV_KEY && ev.code == BTN_TOUCH)
+            down = ev.value != 0;
+        if (ev.type == EV_ABS && down &&
+            (ev.code == ABS_X || ev.code == ABS_Y)) {
             if (ev.code == ABS_X) tx = ev.value;
             if (ev.code == ABS_Y) ty = ev.value;
-            int x = (tx - ax.minimum) * (int)s->width /
-                    (ax.maximum - ax.minimum);
-            int y = (ty - ay.minimum) * (int)s->height /
-                    (ay.maximum - ay.minimum);
+            int64_t rx = tx < ax.minimum ? 0 :
+                (tx > ax.maximum ? ax.maximum - ax.minimum : tx - ax.minimum);
+            int64_t ry = ty < ay.minimum ? 0 :
+                (ty > ay.maximum ? ay.maximum - ay.minimum : ty - ay.minimum);
+            int x = (int)(rx * s->width / (ax.maximum - ax.minimum));
+            int y = (int)(ry * s->height / (ay.maximum - ay.minimum));
             int col = x < (int)s->width / 2 ? 0 : 1;
             int row = y < (int)s->height * 2 / 3 ? 0 : 1;
             selected = row * 2 + col;
             render(s, selected);
         }
     }
-    (void)input;
+    return 0;
 }
 
 int main(int argc, char **argv) {
@@ -206,17 +258,35 @@ int main(int argc, char **argv) {
             return 2;
         }
     }
+
+    struct sigaction action;
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = stop_handler;
+    sigemptyset(&action.sa_mask);
+    if (sigaction(SIGINT, &action, NULL) < 0 ||
+        sigaction(SIGTERM, &action, NULL) < 0) {
+        perror("sigaction"); return 1;
+    }
+
     struct surface s;
     memset(&s, 0, sizeof(s));
     int fbfd = -1;
     if (open_framebuffer(fb, &s, &fbfd) < 0) return 1;
     render(&s, 0);
+
+    int result = 0;
     if (input != NULL) {
         int infd = open(input, O_RDONLY | O_CLOEXEC);
-        if (infd < 0) perror("open touch input");
-        else { touch_loop(&s, input, infd); close(infd); }
+        if (infd < 0) { perror("open touch input"); result = 1; }
+        else {
+            if (touch_loop(&s, infd) < 0) result = 1;
+            close(infd);
+        }
+    } else {
+        while (running) pause();
     }
+
     munmap(s.pixels, s.length);
     close(fbfd);
-    return 0;
+    return result;
 }
