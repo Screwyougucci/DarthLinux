@@ -40,4 +40,6 @@ stage, disables Dropbear, and removes its startup script. It also disables
 the upstream Xorg/Fluxbox startup because this branch starts the framebuffer
 shell instead.
 
-The build also backports the established gnulib fix for m4 1.4.18 on modern glibc (SIGSTKSZ is now runtime-sized); this changes a host build tool only, not the target kernel.\n\nNo AI packages, model runtimes, assistant processes, or AI services are added.
+The build also backports the established gnulib fix for m4 1.4.18 on modern glibc (SIGSTKSZ is now runtime-sized); this changes a host build tool only, not the target kernel.
+
+No AI packages, model runtimes, assistant processes, or AI services are added.
