@@ -36,6 +36,8 @@ fi
 mkdir -p "$BUILDROOT_DIR/package/darth-mobile-shell"
 cp "$ROOT_DIR/buildroot/package/darth-mobile-shell/Config.in" "$BUILDROOT_DIR/package/darth-mobile-shell/Config.in"
 cp "$ROOT_DIR/buildroot/package/darth-mobile-shell/darth-mobile-shell.mk" "$BUILDROOT_DIR/package/darth-mobile-shell/darth-mobile-shell.mk"
+mkdir -p "$BUILDROOT_DIR/package/m4"
+cp "$ROOT_DIR/buildroot/patches/m4/0003-c-stack-stop-using-SIGSTKSZ.patch" "$BUILDROOT_DIR/package/m4/0003-c-stack-stop-using-SIGSTKSZ.patch"
 mkdir -p "$BUILDROOT_DIR/board/darth-mobile"
 cp "$ROOT_DIR/buildroot/post-build.sh" "$BUILDROOT_DIR/board/darth-mobile/post-build.sh"
 chmod 0755 "$BUILDROOT_DIR/board/darth-mobile/post-build.sh"
