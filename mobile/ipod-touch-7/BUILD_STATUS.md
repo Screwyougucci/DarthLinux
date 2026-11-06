@@ -9,6 +9,7 @@ This branch now has:
 - A pinned N112 Buildroot build path using the Sandcastle kernel, device tree, and HX utilities.
 - A Buildroot package and init script that launch the framebuffer UI after HX touch setup.
 - A post-build check that locks the root account and rejects Dropbear startup.
+- A read-only device diagnostic command (darth-hwcheck) for framebuffer, input, GPU/DRM, audio, camera, mounts, and kernel logs.
 - A separate mobile-only build entry point.
 - A Linux host dependency check.
 - Explicit source-directory checks for Project Sandcastle and Buildroot.
@@ -18,7 +19,7 @@ This branch now has:
 
 The UI source and device-specific Buildroot integration are committed, but the N112 image pipeline still needs a successful CI build. No bootable artifact is claimed until CI produces the kernel image, N112 DTB, and initramfs. The shell and touchscreen path still need real-device validation.
 
-The pinned source revisions and N112 device tree/kernel configuration are recorded in `UPSTREAM_PINS.md`. The build uses the upstream HX touch driver and hx-touchd firmware path; GPU acceleration, audio, and camera remain separate driver-development blockers.
+The pinned source revisions and N112 device tree/kernel configuration are recorded in `UPSTREAM_PINS.md`. The build uses the upstream HX touch driver and hx-touchd firmware path. A known m4/glibc host-build compatibility patch is included. GPU acceleration, audio, and camera remain separate driver-development blockers.
 
 The upstream Sandcastle documentation describes a Buildroot-based ramdisk and a loader that passes the kernel and device tree through pongoOS. See:
 - https://projectsandcastle.org/status
