@@ -207,15 +207,26 @@ static int open_framebuffer(const char *path, struct surface *s, int *fd) {
 
 static int touch_loop(struct surface *s, int input_fd) {
     struct input_absinfo ax, ay;
-    if (ioctl(input_fd, EVIOCGABS(ABS_X), &ax) < 0 ||
-        ioctl(input_fd, EVIOCGABS(ABS_Y), &ay) < 0 ||
-        ax.maximum <= ax.minimum || ay.maximum <= ay.minimum) {
-        fputs("Touch axis ranges unavailable; launcher remains static.\n", stderr);
-        return -1;
+    int mt = ioctl(input_fd, EVIOCGABS(ABS_MT_POSITION_X), &ax) == 0 &&
+             ioctl(input_fd, EVIOCGABS(ABS_MT_POSITION_Y), &ay) == 0 &&
+             ax.maximum > ax.minimum && ay.maximum > ay.minimum;
+    if (!mt) {
+        if (ioctl(input_fd, EVIOCGABS(ABS_X), &ax) < 0 ||
+            ioctl(input_fd, EVIOCGABS(ABS_Y), &ay) < 0 ||
+            ax.maximum <= ax.minimum || ay.maximum <= ay.minimum) {
+            fputs("Touch axis ranges unavailable; launcher remains static.\\n", stderr);
+            return -1;
+        }
     }
-    int selected = 0, down = 0, tx = ax.minimum, ty = ay.minimum;
+
+    int selected = 0, down = 0, current_slot = 0;
+    int slot_active[10] = {0}, slot_have_x[10] = {0}, slot_have_y[10] = {0};
+    int slot_x[10] = {0}, slot_y[10] = {0};
+    int legacy_x = ax.minimum, legacy_y = ay.minimum;
+    int legacy_have_x = 0, legacy_have_y = 0;
     struct input_event ev;
     render(s, selected);
+
     while (running) {
         ssize_t count = read(input_fd, &ev, sizeof(ev));
         if (count < 0 && errno == EINTR) continue;
@@ -223,25 +234,93 @@ static int touch_loop(struct surface *s, int input_fd) {
             if (count < 0) perror("read touch input");
             break;
         }
-        if (ev.type == EV_KEY && ev.code == BTN_TOUCH)
+
+        if (mt && ev.type == EV_ABS) {
+            if (ev.code == ABS_MT_SLOT && ev.value >= 0 && ev.value < 10)
+                current_slot = ev.value;
+            else if (current_slot >= 0 && current_slot < 10 &&
+                     ev.code == ABS_MT_TRACKING_ID) {
+                slot_active[current_slot] = ev.value >= 0;
+                if (ev.value >= 0) {
+                    slot_have_x[current_slot] = 0;
+                    slot_have_y[current_slot] = 0;
+                }
+            } else if (current_slot >= 0 && current_slot < 10 &&
+                       ev.code == ABS_MT_POSITION_X) {
+                slot_x[current_slot] = ev.value;
+                slot_have_x[current_slot] = 1;
+            } else if (current_slot >= 0 && current_slot < 10 &&
+                       ev.code == ABS_MT_POSITION_Y) {
+                slot_y[current_slot] = ev.value;
+                slot_have_y[current_slot] = 1;
+            }
+        } else if (!mt && ev.type == EV_KEY && ev.code == BTN_TOUCH) {
             down = ev.value != 0;
-        if (ev.type == EV_ABS && down &&
-            (ev.code == ABS_X || ev.code == ABS_Y)) {
-            if (ev.code == ABS_X) tx = ev.value;
-            if (ev.code == ABS_Y) ty = ev.value;
-            int64_t rx = tx < ax.minimum ? 0 :
-                (tx > ax.maximum ? ax.maximum - ax.minimum : tx - ax.minimum);
-            int64_t ry = ty < ay.minimum ? 0 :
-                (ty > ay.maximum ? ay.maximum - ay.minimum : ty - ay.minimum);
-            int x = (int)(rx * s->width / (ax.maximum - ax.minimum));
-            int y = (int)(ry * s->height / (ay.maximum - ay.minimum));
-            int col = x < (int)s->width / 2 ? 0 : 1;
-            int row = y < (int)s->height * 2 / 3 ? 0 : 1;
-            selected = row * 2 + col;
-            render(s, selected);
+        } else if (!mt && ev.type == EV_ABS) {
+            if (ev.code == ABS_X) {
+                legacy_x = ev.value;
+                legacy_have_x = 1;
+            } else if (ev.code == ABS_Y) {
+                legacy_y = ev.value;
+                legacy_have_y = 1;
+            }
+        }
+
+        if (ev.type == EV_SYN && ev.code == SYN_REPORT) {
+            int tx = legacy_x, ty = legacy_y, touched = 0;
+            if (mt) {
+                for (int i = 0; i < 10; ++i) {
+                    if (slot_active[i] && slot_have_x[i] && slot_have_y[i]) {
+                        tx = slot_x[i];
+                        ty = slot_y[i];
+                        touched = 1;
+                        break;
+                    }
+                }
+            } else {
+                touched = down && legacy_have_x && legacy_have_y;
+            }
+            if (touched) {
+                int64_t rx = tx < ax.minimum ? 0 :
+                    (tx > ax.maximum ? ax.maximum - ax.minimum : tx - ax.minimum);
+                int64_t ry = ty < ay.minimum ? 0 :
+                    (ty > ay.maximum ? ay.maximum - ay.minimum : ty - ay.minimum);
+                int x = (int)(rx * (s->width - 1U) / (ax.maximum - ax.minimum));
+                int y = (int)(ry * (s->height - 1U) / (ay.maximum - ay.minimum));
+                int col = x < (int)s->width / 2 ? 0 : 1;
+                int row = y < (int)s->height * 2 / 3 ? 0 : 1;
+                int next = row * 2 + col;
+                if (next != selected) {
+                    selected = next;
+                    render(s, selected);
+                }
+            }
         }
     }
     return 0;
+}
+
+static int find_touch_device(void) {
+    char path[64], name[256];
+    for (int i = 0; i < 32; ++i) {
+        (void)snprintf(path, sizeof(path), "/dev/input/event%d", i);
+        int fd = open(path, O_RDONLY | O_CLOEXEC);
+        if (fd < 0) continue;
+        memset(name, 0, sizeof(name));
+        if (ioctl(fd, EVIOCGNAME(sizeof(name)), name) >= 0 &&
+            strstr(name, "Hx Capacitive TouchScreen") != NULL) {
+            struct input_absinfo ax, ay;
+            if (ioctl(fd, EVIOCGABS(ABS_MT_POSITION_X), &ax) == 0 &&
+                ioctl(fd, EVIOCGABS(ABS_MT_POSITION_Y), &ay) == 0 &&
+                ax.maximum > ax.minimum && ay.maximum > ay.minimum) {
+                fprintf(stderr, "Using Sandcastle touchscreen: %s (%s)\\n", name, path);
+                return fd;
+            }
+        }
+        close(fd);
+    }
+    fputs("Sandcastle touchscreen not found; launcher will remain static.\\n", stderr);
+    return -1;
 }
 
 int main(int argc, char **argv) {
@@ -251,7 +330,7 @@ int main(int argc, char **argv) {
         if (strcmp(argv[i], "--fb") == 0 && i + 1 < argc) fb = argv[++i];
         else if (strcmp(argv[i], "--input") == 0 && i + 1 < argc) input = argv[++i];
         else if (strcmp(argv[i], "--help") == 0) {
-            puts("Usage: darth-shell [--fb /dev/fb0] [--input /dev/input/eventX] [--self-test]");
+            puts("Usage: darth-shell [--fb /dev/fb0] [--input auto|/dev/input/eventX] [--self-test]");
             return 0;
         } else {
             fprintf(stderr, "Unknown or incomplete option: %s\n", argv[i]);
@@ -276,9 +355,11 @@ int main(int argc, char **argv) {
 
     int result = 0;
     if (input != NULL) {
-        int infd = open(input, O_RDONLY | O_CLOEXEC);
-        if (infd < 0) { perror("open touch input"); result = 1; }
-        else {
+        int infd = strcmp(input, "auto") == 0
+            ? find_touch_device() : open(input, O_RDONLY | O_CLOEXEC);
+        if (infd < 0) {
+            if (strcmp(input, "auto") != 0) perror("open touch input");
+        } else {
             if (touch_loop(&s, infd) < 0) result = 1;
             close(infd);
         }
