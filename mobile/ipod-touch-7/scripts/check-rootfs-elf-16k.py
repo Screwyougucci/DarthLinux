@@ -20,6 +20,9 @@ def inspect_elf(path: Path) -> tuple[bool, str]:
         return False, f"{path}: readelf header failed: {header.stderr.strip()}"
     if "Machine:" not in header.stdout or "AArch64" not in header.stdout:
         return True, "SKIP"
+    # Kernel modules and relocatable objects have no LOAD segments to align.
+    if "Type:" in header.stdout and "REL (Relocatable file)" in header.stdout:
+        return True, "SKIP"
     result = subprocess.run(
         ["readelf", "-lW", str(path)], text=True,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
