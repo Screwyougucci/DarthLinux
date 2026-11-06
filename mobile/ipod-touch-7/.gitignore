@@ -1,0 +1,9 @@
+/build/output/
+/build/sources/
+/artifacts/
+*.img
+*.bin
+*.dtb
+*.cpio
+*.cpio.gz
+*.sha256
