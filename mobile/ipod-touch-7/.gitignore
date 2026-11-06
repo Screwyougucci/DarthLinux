@@ -7,4 +7,6 @@
 *.cpio
 *.cpio.gz
 *.sha256
-\n# Apple-proprietary touch firmware: keep local, never commit\n/firmware/N112.mtprops\n
+
+# Apple-proprietary touch firmware: keep local, never commit
+/firmware/N112.mtprops
