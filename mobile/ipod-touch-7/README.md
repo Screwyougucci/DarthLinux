@@ -10,6 +10,9 @@ Target:
 
 ## Project goal
 
+**Mobile edition policy: no AI.** Darth Linux Mobile will not include Darth AI, an AI assistant, AI model downloads, model runtimes, or AI background services. This exclusion applies only to the mobile edition; the separate desktop Darth Linux project is unchanged.
+
+
 Build a Darth-branded ARM64 Linux userspace and mobile experience for the iPod touch 7, using the existing Project Sandcastle Linux boot path and device support where possible.
 
 The requested end state is to use Linux instead of iOS. That is **not currently established as a safe, permanent replacement**. The first engineering milestone is a temporary, non-destructive Linux boot and hardware validation. No installer may erase, repartition, overwrite, or modify the iOS/APFS installation.
@@ -80,6 +83,7 @@ Initial mobile architecture:
 - [ ] Darth graphite/crimson theme, scalable typography, large touch targets.
 - [ ] Terminal, file manager, network settings, system monitor.
 - [ ] Optional security tools with safe defaults.
+- [ ] No AI assistant, model runtime, model downloads, or AI background services.
 - [ ] No background scanning, telemetry, or network services enabled by default.
 
 ### M4 — Release evaluation
