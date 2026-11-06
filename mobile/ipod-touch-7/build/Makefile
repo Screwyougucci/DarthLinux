@@ -1,11 +1,14 @@
 SHELL := /bin/sh
-.PHONY: help check-host check-sources build clean
+.PHONY: help check-host check-sources ui-test build clean
 
 help:
 	@printf '%s\n' 'Darth Linux Mobile build targets:' '  check-host     Check Linux build dependencies' '  check-sources  Verify Sandcastle source checkout paths' '  build          Run the pinned upstream Buildroot build' '  clean          Remove generated output'
 
 check-host:
 	@sh ../scripts/check-host.sh
+
+ui-test:
+	$(MAKE) -C ../ui test
 
 check-sources:
 	@test -n "$(SANDCASTLE_DIR)" || (echo "Set SANDCASTLE_DIR to a local Project Sandcastle checkout" >&2; exit 2)
