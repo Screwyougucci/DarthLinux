@@ -47,8 +47,8 @@ static void put_pixel(struct surface *s, int x, int y, uint32_t color) {
     if (x < 0 || y < 0 || (uint32_t)x >= s->width ||
         (uint32_t)y >= s->height) return;
     size_t bytes = s->bpp / 8U;
-    size_t row = (size_t)y * s->stride;
-    size_t col = (size_t)x * bytes;
+    size_t row = (size_t)((uint64_t)y + s->var.yoffset) * s->stride;
+    size_t col = (size_t)((uint64_t)x + s->var.xoffset) * bytes;
     if (bytes == 0U || row > s->length || col > s->length - row ||
         bytes > s->length - row - col) return;
     uint8_t *p = s->pixels + row + col;
@@ -189,8 +189,10 @@ static int open_framebuffer(const char *path, struct surface *s, int *fd) {
     s->bpp = s->var.bits_per_pixel; s->stride = fix.line_length;
     s->length = fix.smem_len;
     size_t bytes = s->bpp / 8U;
-    uint64_t minimum_stride = (uint64_t)s->width * bytes;
-    uint64_t minimum_length = (uint64_t)s->stride * s->height;
+    uint64_t visible_width = (uint64_t)s->width + s->var.xoffset;
+    uint64_t visible_height = (uint64_t)s->height + s->var.yoffset;
+    uint64_t minimum_stride = visible_width * bytes;
+    uint64_t minimum_length = (uint64_t)s->stride * visible_height;
     if (fix.visual != FB_VISUAL_TRUECOLOR ||
         s->width == 0U || s->height == 0U ||
         (s->bpp != 16U && s->bpp != 24U && s->bpp != 32U) ||
@@ -307,8 +309,10 @@ static int find_touch_device(void) {
         int fd = open(path, O_RDONLY | O_CLOEXEC);
         if (fd < 0) continue;
         memset(name, 0, sizeof(name));
-        if (ioctl(fd, EVIOCGNAME(sizeof(name)), name) >= 0 &&
-            strstr(name, "Hx Capacitive TouchScreen") != NULL) {
+        if (ioctl(fd, EVIOCGNAME(sizeof(name)), name) >= 0) {
+            name[sizeof(name) - 1U] = '\0';
+        }
+        if (name[0] != '\0' && strstr(name, "Hx Capacitive TouchScreen") != NULL) {
             struct input_absinfo ax, ay;
             if (ioctl(fd, EVIOCGABS(ABS_MT_POSITION_X), &ax) == 0 &&
                 ioctl(fd, EVIOCGABS(ABS_MT_POSITION_Y), &ay) == 0 &&
