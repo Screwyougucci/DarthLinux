@@ -119,3 +119,18 @@ Status: **Not implemented / sensor and ISP research required**.
 ## Current deliverable
 
 The first deliverable is the investigation and fallback layer, not a fake "driver enabled" patch. A working software-rendered UI can be delivered before GPU acceleration. Audio and camera remain disabled until their exact hardware paths are identified and validated.
+
+## Newer mainline kernel evaluation
+
+A source-level review of the HoolockLinux 7.2 `hoolock` and `touch`
+branches found an upstream `t8010-n112.dts` with framebuffer/display and
+button definitions, but no N112 HX touchscreen node. The `touch` branch
+contains an Apple Z2 touchscreen driver, but that is not a demonstrated
+replacement for the Sandcastle N112 HX controller path. Hoolock's A10 feature
+matrix still marks GPU support as TBA, and it does not provide a verified
+N112 audio or camera path.
+
+For now, keep the pinned Corellium Sandcastle 5.4 kernel for the N112 HX
+touchscreen bring-up path, while treating the newer mainline kernel as a
+future parallel port once equivalent N112 touch support exists. This is source
+review only; neither kernel has been validated by Darth on the physical iPod.
