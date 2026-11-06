@@ -214,7 +214,7 @@ static int touch_loop(struct surface *s, int input_fd) {
         if (ioctl(input_fd, EVIOCGABS(ABS_X), &ax) < 0 ||
             ioctl(input_fd, EVIOCGABS(ABS_Y), &ay) < 0 ||
             ax.maximum <= ax.minimum || ay.maximum <= ay.minimum) {
-            fputs("Touch axis ranges unavailable; launcher remains static.\\n", stderr);
+            fputs("Touch axis ranges unavailable; launcher remains static.\n", stderr);
             return -1;
         }
     }
@@ -313,13 +313,13 @@ static int find_touch_device(void) {
             if (ioctl(fd, EVIOCGABS(ABS_MT_POSITION_X), &ax) == 0 &&
                 ioctl(fd, EVIOCGABS(ABS_MT_POSITION_Y), &ay) == 0 &&
                 ax.maximum > ax.minimum && ay.maximum > ay.minimum) {
-                fprintf(stderr, "Using Sandcastle touchscreen: %s (%s)\\n", name, path);
+                fprintf(stderr, "Using Sandcastle touchscreen: %s (%s)\n", name, path);
                 return fd;
             }
         }
         close(fd);
     }
-    fputs("Sandcastle touchscreen not found; launcher will remain static.\\n", stderr);
+    fputs("Sandcastle touchscreen not found; launcher will remain static.\n", stderr);
     return -1;
 }
 
@@ -358,7 +358,12 @@ int main(int argc, char **argv) {
         int infd = strcmp(input, "auto") == 0
             ? find_touch_device() : open(input, O_RDONLY | O_CLOEXEC);
         if (infd < 0) {
-            if (strcmp(input, "auto") != 0) perror("open touch input");
+            if (strcmp(input, "auto") != 0) {
+                perror("open touch input");
+                result = 1;
+            } else {
+                while (running) pause();
+            }
         } else {
             if (touch_loop(&s, infd) < 0) result = 1;
             close(infd);
