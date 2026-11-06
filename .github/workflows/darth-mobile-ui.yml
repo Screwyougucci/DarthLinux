@@ -27,6 +27,7 @@ jobs:
           bash -n mobile/ipod-touch-7/scripts/build-sandcastle.sh
           sh -n mobile/ipod-touch-7/buildroot/post-build.sh
           sh -n mobile/ipod-touch-7/buildroot/overlay/etc/init.d/S99darth-ui
+          sh -n mobile/ipod-touch-7/scripts/device-diagnostics.sh
           python3 -m py_compile mobile/ipod-touch-7/scripts/check-elf-16k.py
       - name: Compile native UI with warnings as errors
         run: make -C mobile/ipod-touch-7/ui clean all
@@ -71,7 +72,7 @@ jobs:
           sudo apt-get install -y \
             build-essential gcc g++ git wget cpio unzip rsync bc file \
             python3 perl patch tar gzip bzip2 xz-utils flex bison \
-            libncurses-dev libssl-dev libelf-dev
+            libncurses-dev libssl-dev libelf-dev pkg-config
       - name: Build pinned Sandcastle N112 kernel, DTB, and root filesystem
         env:
           JOBS: "2"
