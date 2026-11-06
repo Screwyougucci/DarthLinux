@@ -76,7 +76,8 @@ wired into GitHub Actions; passing those tests will not prove device support.
 ### M1 — Build environment
 - [ ] Pin upstream source revisions and toolchain versions.
 - [ ] Create ARM64 Buildroot configuration or compatible minimal rootfs.
-- [ ] Add reproducible build scripts and dependency checks.
+- [x] Add initial reproducible build entry points and host dependency checks.
+- [x] Add UI host tests and AArch64 16 KiB ABI validation workflow.
 - [ ] Add artifact checksums and SBOM/license inventory.
 - [ ] CI builds rootfs only; no device flashing in CI.
 
@@ -112,4 +113,4 @@ wired into GitHub Actions; passing those tests will not prove device support.
 
 ## Current release state
 
-There is no Darth Linux Mobile ISO/IMG/IPA or flashable package yet. This branch currently contains project planning and the verified upstream compatibility baseline only.
+There is no Darth Linux Mobile bootable IMG or flashable package yet. This branch contains the hardware research, safety constraints, initial framebuffer UI source, build scaffolding, and CI definitions. The UI has not yet been validated on the iPod touch 7, and a device-matched root filesystem is still blocked on pinning and integrating the upstream Sandcastle build inputs.
