@@ -6,6 +6,8 @@ on:
       - mobile/ipod-touch-7
     paths:
       - "mobile/ipod-touch-7/firmware-tools/**"
+      - "mobile/ipod-touch-7/scripts/S30hx-touchd.sh"
+      - "mobile/ipod-touch-7/scripts/S99darth-ui.sh"
       - ".github/workflows/darth-mobile-firmware.yml"
   workflow_dispatch:
 
@@ -37,6 +39,10 @@ jobs:
           sudo apt-get install -y build-essential libssl-dev
           python -m venv "$RUNNER_TEMP/firmware-venv"
           "$RUNNER_TEMP/firmware-venv/bin/pip" install -r mobile/ipod-touch-7/firmware-tools/requirements.txt
+      - name: Validate mobile init script syntax
+        run: |
+          sh -n mobile/ipod-touch-7/scripts/S30hx-touchd.sh
+          sh -n mobile/ipod-touch-7/scripts/S99darth-ui.sh
       - name: List IPSW disk-image entries
         run: |
           URL="https://updates.cdn-apple.com/2025FallFCS/fullrestores/122-76865/68174A8B-44B2-4689-B8D4-C8F42F4FFBEE/iPodtouch_7_15.8.8_19H422_Restore.ipsw"
