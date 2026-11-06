@@ -31,6 +31,10 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/firmware-venv"
           "$RUNNER_TEMP/firmware-venv/bin/pip" install -r mobile/ipod-touch-7/firmware-tools/requirements.txt
+      - name: List IPSW disk-image entries
+        run: |
+          URL="https://updates.cdn-apple.com/2025FallFCS/fullrestores/122-76865/68174A8B-44B2-4689-B8D4-C8F42F4FFBEE/iPodtouch_7_15.8.8_19H422_Restore.ipsw"
+          "$RUNNER_TEMP/firmware-venv/bin/python" mobile/ipod-touch-7/firmware-tools/ipswget.py "$URL" list "*.dmg"
       - name: Extract N112 firmware using HTTP range requests
         run: |
           "$RUNNER_TEMP/firmware-venv/bin/python" \
