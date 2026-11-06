@@ -1,17 +1,15 @@
-name: Darth Linux Mobile UI
+name: Darth Linux Mobile N112
 
 on:
   push:
     branches:
       - mobile/ipod-touch-7
     paths:
-      - "mobile/ipod-touch-7/ui/**"
-      - "mobile/ipod-touch-7/build/Makefile"
+      - "mobile/ipod-touch-7/**"
       - ".github/workflows/darth-mobile-ui.yml"
   pull_request:
     paths:
-      - "mobile/ipod-touch-7/ui/**"
-      - "mobile/ipod-touch-7/build/Makefile"
+      - "mobile/ipod-touch-7/**"
       - ".github/workflows/darth-mobile-ui.yml"
   workflow_dispatch:
 
@@ -24,13 +22,19 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
-      - name: Compile with warnings as errors
+      - name: Check shell and Python syntax
+        run: |
+          bash -n mobile/ipod-touch-7/scripts/build-sandcastle.sh
+          sh -n mobile/ipod-touch-7/buildroot/post-build.sh
+          sh -n mobile/ipod-touch-7/buildroot/overlay/etc/init.d/S99darth-ui
+          python3 -m py_compile mobile/ipod-touch-7/scripts/check-elf-16k.py
+      - name: Compile native UI with warnings as errors
         run: make -C mobile/ipod-touch-7/ui clean all
       - name: Run renderer self-test
         run: make -C mobile/ipod-touch-7/ui test
 
-  arm64-compile:
-    runs-on: ubuntu-latest
+  arm64-ui-test:
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -43,15 +47,42 @@ jobs:
           make -C mobile/ipod-touch-7/ui clean all \
             CC=aarch64-linux-gnu-gcc \
             LDFLAGS="-Wl,-z,common-page-size=0x4000 -Wl,-z,max-page-size=0x4000"
-      - name: Verify AArch64 ELF and load segment alignment
+      - name: Verify architecture and 16 KiB load alignment
         run: |
           file mobile/ipod-touch-7/ui/darth-shell
           readelf -h mobile/ipod-touch-7/ui/darth-shell | grep -E 'Machine:.*AArch64'
           python3 mobile/ipod-touch-7/scripts/check-elf-16k.py mobile/ipod-touch-7/ui/darth-shell
-          readelf -l mobile/ipod-touch-7/ui/darth-shell
-      - name: Upload AArch64 prototype build
+      - name: Upload AArch64 shell prototype
         uses: actions/upload-artifact@v4
         with:
           name: darth-mobile-shell-aarch64-prototype
           path: mobile/ipod-touch-7/ui/darth-shell
+          if-no-files-found: error
+
+  n112-image:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Install Buildroot host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential gcc g++ git wget cpio unzip rsync bc file \
+            python3 perl patch tar gzip bzip2 xz-utils flex bison \
+            libncurses-dev libssl-dev libelf-dev
+      - name: Build pinned Sandcastle N112 kernel, DTB, and root filesystem
+        env:
+          JOBS: "2"
+          DARTH_BUILD_WORKDIR: ${{ runner.temp }}/darth-n112-build
+          DARTH_ARTIFACT_DIR: ${{ github.workspace }}/out/artifacts
+        run: |
+          chmod +x mobile/ipod-touch-7/scripts/build-sandcastle.sh
+          mobile/ipod-touch-7/scripts/build-sandcastle.sh
+      - name: Upload N112 boot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: darth-linux-mobile-n112-boot-artifacts
+          path: out/artifacts/*
           if-no-files-found: error
