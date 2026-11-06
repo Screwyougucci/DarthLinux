@@ -21,7 +21,7 @@ def main(path):
         if not fields:
             continue
         if fields[0] == "LOAD" and len(fields) >= 8:
-            load_alignments.append(int(fields[7], 0))
+            load_alignments.append(int(fields[-1], 0))
         elif fields[0] == "GNU_RELRO" and len(fields) >= 6:
             relro = (int(fields[2], 0), int(fields[5], 0))
 
