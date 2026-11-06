@@ -28,6 +28,28 @@ partition file. This is source-level integration only; touch coordinates,
 orientation, firmware availability, and actual taps still require physical
 iPod testing. See UPSTREAM_PINS.md for immutable source revisions.
 
+## Pinned-kernel source audit: GPU, audio, and camera
+
+A source audit of the pinned Sandcastle 5.4 kernel and the N112 device tree did
+not find an N112-specific GPU driver, audio codec/ASoC path, or camera/ISP
+pipeline. The N112 DTS describes the HX MIPI-DSI display path and HX
+touchscreen, but has no audio or camera endpoint nodes. The kernel tree contains
+many generic GPU, audio, and media drivers for unrelated SoCs; their presence
+does not make them compatible with Apple T8010.
+
+This means the remaining three features cannot be enabled safely by changing
+Kconfig symbols or adding guessed device-tree compatibles. Work must begin
+with hardware identification, power/clock/reset sequencing, firmware
+requirements, register documentation or measured traces, then a driver and
+physical-device validation. Until then, retain the framebuffer/software
+rendering path and leave audio, GPU acceleration, and camera unavailable.
+
+Pinned source audit links:
+- https://github.com/corellium/linux-sandcastle/tree/0c2f7dda13d67bb7e06123df516f8bdb1000a79b/arch/arm64/boot/dts/hx
+- https://github.com/corellium/linux-sandcastle/tree/0c2f7dda13d67bb7e06123df516f8bdb1000a79b/drivers/gpu
+- https://github.com/corellium/linux-sandcastle/tree/0c2f7dda13d67bb7e06123df516f8bdb1000a79b/sound
+- https://github.com/corellium/linux-sandcastle/tree/0c2f7dda13d67bb7e06123df516f8bdb1000a79b/drivers/media
+
 ## Workstream A — GPU
 
 ### Initial approach
