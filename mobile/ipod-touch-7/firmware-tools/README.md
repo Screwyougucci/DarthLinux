@@ -12,7 +12,7 @@ from the official iOS 15.8.8 (19H422) IPSW.
 
 ## Extract the touch firmware
 
-Run from Linux or WSL:
+Run from Linux or WSL with Python 3.10 or 3.12 (both are covered by CI):
 
 ```sh
 python3 -m pip install -r mobile/ipod-touch-7/firmware-tools/requirements.txt
