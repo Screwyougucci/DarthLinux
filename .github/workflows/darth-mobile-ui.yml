@@ -1,0 +1,30 @@
+name: Darth Linux Mobile UI
+
+on:
+  push:
+    branches:
+      - mobile/ipod-touch-7
+    paths:
+      - "mobile/ipod-touch-7/ui/**"
+      - "mobile/ipod-touch-7/build/Makefile"
+      - ".github/workflows/darth-mobile-ui.yml"
+  pull_request:
+    paths:
+      - "mobile/ipod-touch-7/ui/**"
+      - "mobile/ipod-touch-7/build/Makefile"
+      - ".github/workflows/darth-mobile-ui.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-ui-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Compile with warnings as errors
+        run: make -C mobile/ipod-touch-7/ui clean all
+      - name: Run renderer self-test
+        run: make -C mobile/ipod-touch-7/ui test
