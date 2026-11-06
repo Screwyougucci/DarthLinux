@@ -35,22 +35,27 @@ def run(command: list[str], *, capture: bool = False) -> subprocess.CompletedPro
 
 
 def find_rootfs_dmg(url: str) -> str:
+    # Apple names restore images differently across iOS releases. The APFS
+    # root filesystem image is the largest .dmg in this device's IPSW.
     result = run(
-        [sys.executable, str(HERE / "ipswget.py"), url, "list", "*RestoreRootFS.dmg"],
+        [sys.executable, str(HERE / "ipswget.py"), url, "list", "*.dmg"],
         capture=True,
     )
-    matches = []
+    matches: list[tuple[int, str]] = []
     for line in result.stdout.splitlines():
-        match = re.match(r"^\s*\d+\s+(.+?)\s*$", line)
+        match = re.match(r"^\s*(\d+)\s+(.+?)\s*$", line)
         if match:
-            matches.append(match.group(1))
-    if len(matches) != 1:
-        details = "\n".join(matches) if matches else result.stdout.strip()
+            matches.append((int(match.group(1)), match.group(2)))
+    if not matches:
+        raise RuntimeError("The IPSW contains no .dmg entries")
+    size, name = max(matches)
+    if size < 1_000_000_000:
+        details = "\n".join(f"{nbytes:12d}  {path}" for nbytes, path in matches)
         raise RuntimeError(
-            "Could not uniquely identify RestoreRootFS.dmg in the IPSW. "
-            "Pass --dmg with the exact archive path.\n" + details
+            "No large root filesystem DMG was found; pass --dmg explicitly.\n" + details
         )
-    return matches[0]
+    print(f"Selected root filesystem image: {name} ({size:,} bytes)")
+    return name
 
 
 def main() -> int:
