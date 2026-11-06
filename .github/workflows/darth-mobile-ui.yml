@@ -5,13 +5,23 @@ on:
     branches:
       - mobile/ipod-touch-7
     paths:
-      - "mobile/ipod-touch-7/**"
+      - "mobile/ipod-touch-7/ui/**"
+      - "mobile/ipod-touch-7/build/**"
+      - "mobile/ipod-touch-7/buildroot/**"
+      - "mobile/ipod-touch-7/scripts/build-sandcastle.sh"
+      - "mobile/ipod-touch-7/scripts/check-elf-16k.py"
+      - "mobile/ipod-touch-7/scripts/check-host.sh"
+      - "mobile/ipod-touch-7/scripts/device-diagnostics.sh"
       - ".github/workflows/darth-mobile-ui.yml"
   pull_request:
     paths:
       - "mobile/ipod-touch-7/**"
       - ".github/workflows/darth-mobile-ui.yml"
   workflow_dispatch:
+
+concurrency:
+  group: darth-mobile-n112-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
