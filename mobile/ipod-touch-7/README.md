@@ -55,6 +55,14 @@ Initial mobile architecture:
 4. Keep device-specific firmware and upstream components traceable to their original projects and licenses.
 5. Produce checksummed, reproducible artifacts and publish a clear hardware-support matrix.
 
+## First UI prototype
+
+A dependency-light C framebuffer launcher now lives in [ui/](ui/). It draws a
+Darth-themed four-tile screen using the kernel framebuffer, with optional
+explicit evdev touch input. It intentionally uses software drawing and does
+not claim GPU acceleration. Host-side compile and renderer self-tests are
+wired into GitHub Actions; passing those tests will not prove device support.
+
 ## Milestones
 
 ### M0 — Research and safeguards
@@ -79,7 +87,7 @@ Initial mobile architecture:
 - [ ] Explicitly mark GPU, audio, and camera unavailable unless independently implemented and tested.
 
 ### M3 — Darth Mobile interface
-- [ ] Touch-first launcher and settings.
+- [x] First framebuffer launcher prototype (touch selection is experimental).\n- [ ] Full touch-first launcher and settings.
 - [ ] Darth graphite/crimson theme, scalable typography, large touch targets.
 - [ ] Terminal, file manager, network settings, system monitor.
 - [ ] Optional security tools with safe defaults.
