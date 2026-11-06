@@ -5,7 +5,7 @@ help:
 	@printf '%s\n' 'Darth Linux Mobile build targets:' '  check-host     Check Linux build dependencies' '  check-sources  Verify Sandcastle source checkout paths' '  build          Run the pinned upstream Buildroot build' '  clean          Remove generated output'
 
 check-host:
-	@../scripts/check-host.sh
+	@sh ../scripts/check-host.sh
 
 check-sources:
 	@test -n "$(SANDCASTLE_DIR)" || (echo "Set SANDCASTLE_DIR to a local Project Sandcastle checkout" >&2; exit 2)
