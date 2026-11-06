@@ -135,6 +135,8 @@ fi
 grep -q '^BR2_LINUX_KERNEL_DTS_SUPPORT=y$' "$BUILDROOT_DIR/.config"
 grep -q '^BR2_LINUX_KERNEL_INTREE_DTS_NAME="hx/hx-h9p-n112"$' "$BUILDROOT_DIR/.config"
 
+# Re-extract host-m4 so the compatibility patch is applied even on incremental runs.
+make -C "$BUILDROOT_DIR" host-m4-dirclean
 make -C "$BUILDROOT_DIR" -j"$JOBS" DART_MOBILE_SOURCE_DIR="$ROOT_DIR"
 
 mkdir -p "$ARTIFACT_DIR"
