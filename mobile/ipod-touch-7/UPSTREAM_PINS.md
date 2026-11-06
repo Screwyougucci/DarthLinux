@@ -41,5 +41,6 @@ the upstream Xorg/Fluxbox startup because this branch starts the framebuffer
 shell instead.
 
 The build also backports the established gnulib fix for m4 1.4.18 on modern glibc (SIGSTKSZ is now runtime-sized); this changes a host build tool only, not the target kernel.
+It also backports Buildroot commit f45925a951318e9e53bead80b363e004301adc6f for fakeroot 1.20.2 on glibc 2.33+, including the _STAT_VER and exported-stat-wrapper fixes. These are host-tool compatibility patches only.
 
 No AI packages, model runtimes, assistant processes, or AI services are added.
