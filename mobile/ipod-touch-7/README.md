@@ -61,10 +61,12 @@ Initial mobile architecture:
 
 A dependency-light C framebuffer launcher now lives in [ui/](ui/). It draws a
 Darth-themed four-tile screen using the kernel framebuffer, with optional
-explicit evdev touch input. It intentionally uses software drawing and does
-not claim GPU acceleration. Host-side compile and renderer self-tests, AArch64 16 KiB ABI checks, and a
-pinned N112 Buildroot image build are wired into GitHub Actions. Passing CI
-will still not prove the image boots on the physical iPod.
+the upstream HX multitouch evdev input device. It intentionally uses software
+drawing and does not claim GPU acceleration. Host-side tests, AArch64 16 KiB
+ABI checks, and a pinned N112 Buildroot image build run in GitHub Actions.
+Passing CI will still not prove the image boots on the physical iPod.
+See [UPSTREAM_PINS.md](UPSTREAM_PINS.md) for the exact kernel, device-tree,
+Buildroot, and touchscreen utility revisions.
 
 ## Milestones
 
@@ -82,7 +84,7 @@ will still not prove the image boots on the physical iPod.
 - [x] Add reproducible build entry points and host dependency checks.
 - [x] Add UI host tests and AArch64 16 KiB ABI validation workflow.
 - [ ] Complete a successful N112 kernel, DTB, and initramfs build in CI.
-- [x] Generate SHA-256 checksums for successful build artifacts.
+- [ ] Generate and verify SHA-256 checksums for successful build artifacts.
 - [ ] Complete the SBOM/license inventory.
 
 ### M2 — Non-destructive boot
