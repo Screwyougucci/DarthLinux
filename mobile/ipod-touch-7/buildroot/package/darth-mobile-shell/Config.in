@@ -1,0 +1,5 @@
+config BR2_PACKAGE_DARTH_MOBILE_SHELL
+	bool "Darth Mobile framebuffer shell"
+	help
+	  Small framebuffer launcher for the Sandcastle iPod touch 7 target.
+	  Uses the kernel framebuffer and HX multitouch evdev input.
