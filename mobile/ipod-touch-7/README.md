@@ -44,7 +44,7 @@ Sources:
 - https://github.com/corellium/projectsandcastle
 - https://ios.cfw.guide/get-started/iPod-touch-%287th-generation%29.html
 
-## Architecture decision
+Detailed driver work is tracked in [HARDWARE_BRINGUP.md](HARDWARE_BRINGUP.md). The initial UI will use the loader-provided framebuffer and software rendering where needed; GPU acceleration, audio, and camera will remain clearly marked unavailable until their driver work passes the documented tests.\n\n## Architecture decision
 
 Do not assume the desktop Darth Archiso image can boot directly on this Apple device. Keep the desktop profile unchanged.
 
