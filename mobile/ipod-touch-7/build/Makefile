@@ -2,7 +2,7 @@ SHELL := /bin/sh
 .PHONY: help check-host check-sources ui-test build clean
 
 help:
-	@printf '%s\n' 'Darth Linux Mobile build targets:' '  check-host     Check Linux build dependencies' '  check-sources  Verify Sandcastle source checkout paths' '  ui-test        Build and test the framebuffer shell' '  build          Run the pinned upstream Buildroot build' '  clean          Remove generated output'
+	@printf '%s\n' 'Darth Linux Mobile build targets:' '  check-host     Check Linux build dependencies' '  check-sources  Verify Sandcastle source checkout paths' '  ui-test        Build and test the framebuffer shell' '  build          Build the pinned N112 kernel, DTB, and rootfs' '  clean          Remove generated output'
 
 check-host:
 	@sh ../scripts/check-host.sh
@@ -17,10 +17,8 @@ check-sources:
 	@test -f "$(BUILDROOT_DIR)/Makefile" || (echo "BUILDROOT_DIR is not a Buildroot source tree" >&2; exit 2)
 	@echo "Source directories found. Compatibility/configuration is not yet validated."
 
-build: check-host check-sources
-	@echo "STOP: a device-matched Sandcastle Buildroot defconfig has not yet been pinned."
-	@echo "No generic rootfs will be substituted for the iPod9,1 configuration."
-	@exit 3
+build: check-host
+	JOBS=${JOBS:-2} bash ../scripts/build-sandcastle.sh
 
 clean:
-	rm -rf output
+	rm -rf ../out/sandcastle ../out/artifacts
