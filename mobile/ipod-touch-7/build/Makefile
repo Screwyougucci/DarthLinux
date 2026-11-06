@@ -2,7 +2,7 @@ SHELL := /bin/sh
 .PHONY: help check-host check-sources ui-test build clean
 
 help:
-	@printf '%s\n' 'Darth Linux Mobile build targets:' '  check-host     Check Linux build dependencies' '  check-sources  Verify Sandcastle source checkout paths' '  build          Run the pinned upstream Buildroot build' '  clean          Remove generated output'
+	@printf '%s\n' 'Darth Linux Mobile build targets:' '  check-host     Check Linux build dependencies' '  check-sources  Verify Sandcastle source checkout paths' '  ui-test        Build and test the framebuffer shell' '  build          Run the pinned upstream Buildroot build' '  clean          Remove generated output'
 
 check-host:
 	@sh ../scripts/check-host.sh
