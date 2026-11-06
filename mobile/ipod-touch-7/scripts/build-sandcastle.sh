@@ -115,6 +115,11 @@ test -f "$BUILDROOT_DIR/sandcastle-overlay/etc/hw/hx-touch.fwlist"
 grep -q 'N112.mtprops' "$BUILDROOT_DIR/sandcastle-overlay/etc/hw/hx-touch.fwlist"
 grep -Eq '/hostfs[[:space:]]+apfs[[:space:]]+ro' "$BUILDROOT_DIR/sandcastle-overlay/etc/fstab"
 
+# Buildroot expects its generated external-tree make fragment to exist even
+# when no external tree is selected. Generate the empty fragment explicitly.
+"$BUILDROOT_DIR/support/scripts/br2-external" -d "$BUILDROOT_DIR/output"
+test -f "$BUILDROOT_DIR/output/.br2-external.mk"
+
 make -C "$BUILDROOT_DIR" olddefconfig
 grep -q '^BR2_PACKAGE_DARTH_MOBILE_SHELL=y$' "$BUILDROOT_DIR/.config"
 if grep -q '^BR2_PACKAGE_DROPBEAR=y$' "$BUILDROOT_DIR/.config"; then
