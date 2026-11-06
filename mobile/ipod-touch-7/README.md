@@ -44,7 +44,9 @@ Sources:
 - https://github.com/corellium/projectsandcastle
 - https://ios.cfw.guide/get-started/iPod-touch-%287th-generation%29.html
 
-Detailed driver work is tracked in [HARDWARE_BRINGUP.md](HARDWARE_BRINGUP.md). The initial UI will use the loader-provided framebuffer and software rendering where needed; GPU acceleration, audio, and camera will remain clearly marked unavailable until their driver work passes the documented tests.\n\n## Architecture decision
+Detailed driver work is tracked in [HARDWARE_BRINGUP.md](HARDWARE_BRINGUP.md). The initial UI will use the loader-provided framebuffer and software rendering where needed; GPU acceleration, audio, and camera will remain clearly marked unavailable until their driver work passes the documented tests.
+
+## Architecture decision
 
 Do not assume the desktop Darth Archiso image can boot directly on this Apple device. Keep the desktop profile unchanged.
 
@@ -60,8 +62,9 @@ Initial mobile architecture:
 A dependency-light C framebuffer launcher now lives in [ui/](ui/). It draws a
 Darth-themed four-tile screen using the kernel framebuffer, with optional
 explicit evdev touch input. It intentionally uses software drawing and does
-not claim GPU acceleration. Host-side compile and renderer self-tests are
-wired into GitHub Actions; passing those tests will not prove device support.
+not claim GPU acceleration. Host-side compile and renderer self-tests, AArch64 16 KiB ABI checks, and a
+pinned N112 Buildroot image build are wired into GitHub Actions. Passing CI
+will still not prove the image boots on the physical iPod.
 
 ## Milestones
 
@@ -74,12 +77,13 @@ wired into GitHub Actions; passing those tests will not prove device support.
 - [ ] Document recovery path before any device-side test.
 
 ### M1 — Build environment
-- [ ] Pin upstream source revisions and toolchain versions.
-- [ ] Create ARM64 Buildroot configuration or compatible minimal rootfs.
-- [x] Add initial reproducible build entry points and host dependency checks.
+- [x] Pin Sandcastle Buildroot, kernel, and Project Sandcastle utility source revisions.
+- [x] Add the N112 Buildroot configuration path and HX touchscreen integration.
+- [x] Add reproducible build entry points and host dependency checks.
 - [x] Add UI host tests and AArch64 16 KiB ABI validation workflow.
-- [ ] Add artifact checksums and SBOM/license inventory.
-- [ ] CI builds rootfs only; no device flashing in CI.
+- [ ] Complete a successful N112 kernel, DTB, and initramfs build in CI.
+- [x] Generate SHA-256 checksums for successful build artifacts.
+- [ ] Complete the SBOM/license inventory.
 
 ### M2 — Non-destructive boot
 - [ ] Boot using the documented Sandcastle path without erasing or repartitioning storage.
@@ -88,7 +92,9 @@ wired into GitHub Actions; passing those tests will not prove device support.
 - [ ] Explicitly mark GPU, audio, and camera unavailable unless independently implemented and tested.
 
 ### M3 — Darth Mobile interface
-- [x] First framebuffer launcher prototype (touch selection is experimental).\n- [ ] Full touch-first launcher and settings.
+- [x] First framebuffer launcher prototype (touch selection is experimental).
+- [x] Wire the N112 HX multitouch input path into the launcher and Buildroot startup.
+- [ ] Full touch-first launcher and settings.
 - [ ] Darth graphite/crimson theme, scalable typography, large touch targets.
 - [ ] Terminal, file manager, network settings, system monitor.
 - [ ] Optional security tools with safe defaults.
@@ -113,4 +119,4 @@ wired into GitHub Actions; passing those tests will not prove device support.
 
 ## Current release state
 
-There is no Darth Linux Mobile bootable IMG or flashable package yet. This branch contains the hardware research, safety constraints, initial framebuffer UI source, build scaffolding, and CI definitions. The UI has not yet been validated on the iPod touch 7, and a device-matched root filesystem is still blocked on pinning and integrating the upstream Sandcastle build inputs.
+There is no verified Darth Linux Mobile bootable image yet. This branch now contains pinned N112 kernel/Buildroot inputs, the HX touchscreen startup path, the framebuffer shell, and CI to build a kernel image, N112 DTB, and initramfs. The pipeline has not yet completed successfully, and no physical-device boot or touchscreen test has been performed.
