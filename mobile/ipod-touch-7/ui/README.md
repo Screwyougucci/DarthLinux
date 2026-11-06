@@ -20,7 +20,7 @@ that the iPod's framebuffer or touch controller works.
 
 ```sh
 sudo ./darth-shell --fb /dev/fb0
-sudo ./darth-shell --fb /dev/fb0 --input /dev/input/eventX
+sudo ./darth-shell --fb /dev/fb0 --input auto\n# Or explicitly select a verified event node:\nsudo ./darth-shell --fb /dev/fb0 --input /dev/input/eventX
 ```
 
 The input event node is deliberately explicit. Identify it from read-only
@@ -32,7 +32,7 @@ calibration may still be required.
 ## Current limitations
 
 - Uses the kernel-provided framebuffer; no GPU driver or acceleration.
-- Touch input is optional and requires a verified evdev node.
+- Touch input uses the upstream HX multitouch evdev interface when the HX firmware daemon has initialized it.
 - No audio, camera, Wi-Fi, installer, persistence, or AI code is included.
 - It does not mount, write, or modify iOS/APFS/NAND storage.
 - The prototype is not yet integrated into a bootable root filesystem.
