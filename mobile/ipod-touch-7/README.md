@@ -60,13 +60,13 @@ Initial mobile architecture:
 ## First UI prototype
 
 A dependency-light C framebuffer launcher now lives in [ui/](ui/). It draws a
-Darth-themed four-tile screen using the kernel framebuffer, with optional
-the upstream HX multitouch evdev input device. It intentionally uses software
-drawing and does not claim GPU acceleration. Host-side tests, AArch64 16 KiB
-ABI checks, and a pinned N112 Buildroot image build run in GitHub Actions.
-Passing CI will still not prove the image boots on the physical iPod.
-See [UPSTREAM_PINS.md](UPSTREAM_PINS.md) for the exact kernel, device-tree,
-Buildroot, and touchscreen utility revisions.
+Darth-themed four-tile screen using software rendering and auto-detects the
+upstream HX multitouch evdev device. The Buildroot package starts it after
+HX firmware setup and includes the read-only hardware inventory command
+darth-hwcheck. Host tests, AArch64 16 KiB ABI checks, and the pinned N112
+Buildroot image build run in GitHub Actions. Passing CI will still not prove
+the image boots on the physical iPod.
+See [UPSTREAM_PINS.md](UPSTREAM_PINS.md) for exact source revisions.
 
 ## Milestones
 
