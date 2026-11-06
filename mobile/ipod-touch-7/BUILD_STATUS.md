@@ -1,14 +1,21 @@
 # Darth Linux Mobile build status
 
-## Current stage: M1 scaffolding
+## Current stage: M1 scaffolding + first UI prototype
 
 This branch now has:
+- A first dependency-light C framebuffer launcher prototype in `ui/`.
+- A host compile and renderer self-test workflow in GitHub Actions.
+- An independent `ui-test` target in the build Makefile.
 - A separate mobile-only build entry point.
 - A Linux host dependency check.
 - Explicit source-directory checks for Project Sandcastle and Buildroot.
 - A hard stop instead of silently building a generic, incompatible ARM64 image.
 
 ## Blocking engineering inputs
+
+The UI prototype is source-complete but still needs a successful CI run and
+real-device framebuffer/touch validation. It is not yet included in a bootable
+root filesystem.
 
 The actual iPod9,1 build must use the exact upstream kernel, device tree, loader, Buildroot external configuration, firmware handling, and required 16 KiB page-size ABI. These must be pinned to known revisions before a reproducible image can be claimed.
 
