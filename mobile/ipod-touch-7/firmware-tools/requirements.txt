@@ -1,2 +1,2 @@
-libfsapfs-python
-pyliblzfse
+libfsapfs-python==20261030
+pyliblzfse==0.4.1
