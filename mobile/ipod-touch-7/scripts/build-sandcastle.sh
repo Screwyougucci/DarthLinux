@@ -24,6 +24,8 @@ else
     git -C "$BUILDROOT_DIR" checkout --detach "$BUILDROOT_SHA"
 fi
 
+mkdir -p "$BUILDROOT_DIR/output"
+
 ACTUAL_BUILDROOT_SHA="$(git -C "$BUILDROOT_DIR" rev-parse HEAD)"
 if [ "$ACTUAL_BUILDROOT_SHA" != "$BUILDROOT_SHA" ]; then
     echo "ERROR: unexpected Buildroot revision $ACTUAL_BUILDROOT_SHA" >&2
