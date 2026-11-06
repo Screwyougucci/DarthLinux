@@ -10,6 +10,7 @@ JOBS="${JOBS:-2}"
 BUILDROOT_SHA="95af39e1b271f2b25f73b32555db92c83f916ca8"
 KERNEL_SHA="0c2f7dda13d67bb7e06123df516f8bdb1000a79b"
 PROJECTSANDCASTLE_SHA="03db9c6ae04141eb940f3b9f56d446f50d57fadf"
+KERNEL_CONFIG_BLOB_SHA="643a97e52a5a0f09457844b7487d77ed846eede9"
 
 mkdir -p "$WORK_DIR" "$ARTIFACT_DIR"
 
@@ -29,6 +30,19 @@ mkdir -p "$BUILDROOT_DIR/output"
 ACTUAL_BUILDROOT_SHA="$(git -C "$BUILDROOT_DIR" rev-parse HEAD)"
 if [ "$ACTUAL_BUILDROOT_SHA" != "$BUILDROOT_SHA" ]; then
     echo "ERROR: unexpected Buildroot revision $ACTUAL_BUILDROOT_SHA" >&2
+    exit 1
+fi
+
+# The upstream .config points inside the old output/build/linux-sandcastle-5.4
+# directory. Buildroot extracts the pinned commit into linux-<commit>, so that
+# path is stale. Keep the exact upstream defconfig in a stable Buildroot path.
+mkdir -p "$BUILDROOT_DIR/board/darth-mobile"
+wget -qO "$BUILDROOT_DIR/board/darth-mobile/hx_h9p_defconfig" \
+    "https://raw.githubusercontent.com/corellium/linux-sandcastle/$KERNEL_SHA/arch/arm64/configs/hx_h9p_defconfig"
+ACTUAL_KERNEL_CONFIG_BLOB_SHA="$(git -C "$BUILDROOT_DIR" hash-object board/darth-mobile/hx_h9p_defconfig)"
+if [ "$ACTUAL_KERNEL_CONFIG_BLOB_SHA" != "$KERNEL_CONFIG_BLOB_SHA" ]; then
+    echo "ERROR: N112 kernel defconfig does not match the pinned upstream blob." >&2
+    echo "Expected $KERNEL_CONFIG_BLOB_SHA, got $ACTUAL_KERNEL_CONFIG_BLOB_SHA" >&2
     exit 1
 fi
 
@@ -76,6 +90,8 @@ replacements = {
         'BR2_TARGET_GENERIC_ROOT_PASSWD="locked-by-darth-post-build"',
     'BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="sandcastle-5.4"':
         f'BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="{kernel_sha}"',
+    'BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="output/build/linux-sandcastle-5.4/arch/arm64/configs/hx_h9p_defconfig"':
+        'BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="board/darth-mobile/hx_h9p_defconfig"',
     '# BR2_LINUX_KERNEL_DTS_SUPPORT is not set':
         'BR2_LINUX_KERNEL_DTS_SUPPORT=y',
     'BR2_ROOTFS_POST_BUILD_SCRIPT=""':
@@ -134,7 +150,77 @@ if grep -q '^BR2_PACKAGE_XORG7=y$' "$BUILDROOT_DIR/.config"; then
     echo "ERROR: Xorg is still enabled." >&2
     exit 1
 fi
-grep -q '^BR2_LINUX_KERNEL_DTS_SUPPORT=y$' "$BUILDROOT_DIR/.config"
+grep -q '^BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="board/darth-mobile/hx_h9p_defconfig"grep -q '^BR2_LINUX_KERNEL_INTREE_DTS_NAME="hx/hx-h9p-n112"$' "$BUILDROOT_DIR/.config"
+
+# Re-extract host-m4 so the compatibility patch is applied even on incremental runs.
+make -C "$BUILDROOT_DIR" host-m4-dirclean host-fakeroot-dirclean
+make -C "$BUILDROOT_DIR" -j"$JOBS" DART_MOBILE_SOURCE_DIR="$ROOT_DIR"
+
+mkdir -p "$ARTIFACT_DIR"
+if [ -f "$BUILDROOT_DIR/output/images/Image.gz" ]; then
+    cp "$BUILDROOT_DIR/output/images/Image.gz" "$ARTIFACT_DIR/Image.gz"
+elif [ -f "$BUILDROOT_DIR/output/images/Image" ]; then
+    cp "$BUILDROOT_DIR/output/images/Image" "$ARTIFACT_DIR/Image"
+else
+    echo "ERROR: Buildroot did not produce an ARM64 Image." >&2
+    exit 1
+fi
+
+for name in hx-h9p-n112.dtb rootfs.cpio.gz; do
+    if [ ! -f "$BUILDROOT_DIR/output/images/$name" ]; then
+        echo "ERROR: Buildroot did not produce $name." >&2
+        find "$BUILDROOT_DIR/output/images" -maxdepth 1 -type f -printf '%f\n' >&2
+        exit 1
+    fi
+    cp "$BUILDROOT_DIR/output/images/$name" "$ARTIFACT_DIR/$name"
+done
+
+cp "$BUILDROOT_DIR/.config" "$ARTIFACT_DIR/buildroot.config"
+printf 'Buildroot %s\nKernel %s\nProject Sandcastle %s\n' \
+    "$BUILDROOT_SHA" "$KERNEL_SHA" "$PROJECTSANDCASTLE_SHA" > "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
+printf "N112 kernel defconfig blob %s\n" "$KERNEL_CONFIG_BLOB_SHA" >> "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
+(
+    cd "$ARTIFACT_DIR"
+    sha256sum Image* hx-h9p-n112.dtb rootfs.cpio.gz buildroot.config UPSTREAM_REVISIONS.txt > SHA256SUMS
+)
+
+echo "N112 build artifacts created in: $ARTIFACT_DIR"
+ "$BUILDROOT_DIR/.config"
+grep -q '^BR2_LINUX_KERNEL_DTS_SUPPORT=ygrep -q '^BR2_LINUX_KERNEL_INTREE_DTS_NAME="hx/hx-h9p-n112"$' "$BUILDROOT_DIR/.config"
+
+# Re-extract host-m4 so the compatibility patch is applied even on incremental runs.
+make -C "$BUILDROOT_DIR" host-m4-dirclean host-fakeroot-dirclean
+make -C "$BUILDROOT_DIR" -j"$JOBS" DART_MOBILE_SOURCE_DIR="$ROOT_DIR"
+
+mkdir -p "$ARTIFACT_DIR"
+if [ -f "$BUILDROOT_DIR/output/images/Image.gz" ]; then
+    cp "$BUILDROOT_DIR/output/images/Image.gz" "$ARTIFACT_DIR/Image.gz"
+elif [ -f "$BUILDROOT_DIR/output/images/Image" ]; then
+    cp "$BUILDROOT_DIR/output/images/Image" "$ARTIFACT_DIR/Image"
+else
+    echo "ERROR: Buildroot did not produce an ARM64 Image." >&2
+    exit 1
+fi
+
+for name in hx-h9p-n112.dtb rootfs.cpio.gz; do
+    if [ ! -f "$BUILDROOT_DIR/output/images/$name" ]; then
+        echo "ERROR: Buildroot did not produce $name." >&2
+        find "$BUILDROOT_DIR/output/images" -maxdepth 1 -type f -printf '%f\n' >&2
+        exit 1
+    fi
+    cp "$BUILDROOT_DIR/output/images/$name" "$ARTIFACT_DIR/$name"
+done
+
+cp "$BUILDROOT_DIR/.config" "$ARTIFACT_DIR/buildroot.config"
+printf 'Buildroot %s\nKernel %s\nProject Sandcastle %s\n' \
+    "$BUILDROOT_SHA" "$KERNEL_SHA" "$PROJECTSANDCASTLE_SHA" > "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
+(
+    cd "$ARTIFACT_DIR"
+    sha256sum Image* hx-h9p-n112.dtb rootfs.cpio.gz buildroot.config UPSTREAM_REVISIONS.txt > SHA256SUMS
+)
+
+echo "N112 build artifacts created in: $ARTIFACT_DIR"
+ "$BUILDROOT_DIR/.config"
 grep -q '^BR2_LINUX_KERNEL_INTREE_DTS_NAME="hx/hx-h9p-n112"$' "$BUILDROOT_DIR/.config"
 
 # Re-extract host-m4 so the compatibility patch is applied even on incremental runs.
