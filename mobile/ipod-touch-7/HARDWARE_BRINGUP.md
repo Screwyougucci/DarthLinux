@@ -13,6 +13,21 @@ References:
 - https://lists.openwall.net/linux-kernel/2024/09/15/104
 - https://lore-kernel.gnuweeb.org/lkml/20240919161443.10340-12-towinchenmi%40gmail.com/T/
 
+## Touchscreen — upstream path now integrated (not yet device-tested)
+
+The pinned N112 device tree and HX kernel config provide a concrete input path:
+- Device tree: hx-h9p-n112.dts declares the SPI device as compatible with hx,touch.
+- Kernel driver: drivers/input/touchscreen/hx-touch.c registers Hx Capacitive TouchScreen and ten multitouch slots.
+- Firmware helper: hx-touchd loads the N112.mtprops firmware from the upstream firmware list.
+- The Darth shell now auto-detects that input device and reads ABS_MT_SLOT,
+  ABS_MT_TRACKING_ID, and ABS_MT_POSITION_X/Y events.
+
+The Buildroot image starts the upstream hx-touchd service before the Darth UI.
+The APFS host mount remains read-only, and the syscfg helper reads the supplied
+partition file. This is source-level integration only; touch coordinates,
+orientation, firmware availability, and actual taps still require physical
+iPod testing. See UPSTREAM_PINS.md for immutable source revisions.
+
 ## Workstream A — GPU
 
 ### Initial approach
