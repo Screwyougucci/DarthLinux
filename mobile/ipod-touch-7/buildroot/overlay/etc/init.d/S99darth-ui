@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# Starts the Darth Mobile framebuffer launcher.
+#
+
+start() {
+	printf "Starting Darth Mobile UI: "
+	# hx-touchd is started by S30hx-touchd. Wait briefly for firmware setup,
+	# but never block boot indefinitely if the device firmware is unavailable.
+	i=0
+	while [ "$i" -lt 20 ]; do
+		if grep -q "Hx Capacitive TouchScreen" /proc/bus/input/devices 2>/dev/null; then
+			break
+		fi
+		sleep 1
+		i=$((i + 1))
+	done
+	start-stop-daemon -S -b -m -p /var/run/darth-shell.pid \
+		--exec /usr/bin/darth-shell -- --fb /dev/fb0 --input auto
+	[ "$?" = 0 ] && echo "OK" || echo "FAIL"
+}
+
+stop() {
+	printf "Stopping Darth Mobile UI: "
+	start-stop-daemon -K -q -p /var/run/darth-shell.pid
+	[ "$?" = 0 ] && echo "OK" || echo "FAIL"
+}
+
+case "$1" in
+	start) start ;;
+	stop) stop ;;
+	restart|reload) stop; start ;;
+	*) echo "Usage: $0 {start|stop|restart}"; exit 1 ;;
+esac
+
+exit $?
