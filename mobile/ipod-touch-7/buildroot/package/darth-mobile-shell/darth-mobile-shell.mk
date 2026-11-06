@@ -20,6 +20,7 @@ endef
 define DART_MOBILE_SHELL_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/darth-shell $(TARGET_DIR)/usr/bin/darth-shell
 	$(INSTALL) -D -m 0755 $(DART_MOBILE_SOURCE_DIR)/buildroot/overlay/etc/init.d/S99darth-ui $(TARGET_DIR)/etc/init.d/S99darth-ui
+	$(INSTALL) -D -m 0755 $(DART_MOBILE_SOURCE_DIR)/scripts/device-diagnostics.sh $(TARGET_DIR)/usr/sbin/darth-hwcheck
 endef
 
 $(eval $(generic-package))
