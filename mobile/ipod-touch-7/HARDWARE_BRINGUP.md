@@ -22,11 +22,16 @@ The pinned N112 device tree and HX kernel config provide a concrete input path:
 - The Darth shell now auto-detects that input device and reads ABS_MT_SLOT,
   ABS_MT_TRACKING_ID, and ABS_MT_POSITION_X/Y events.
 
-The Buildroot image starts the upstream hx-touchd service before the Darth UI.
-The APFS host mount remains read-only, and the syscfg helper reads the supplied
-partition file. This is source-level integration only; touch coordinates,
-orientation, firmware availability, and actual taps still require physical
-iPod testing. See UPSTREAM_PINS.md for immutable source revisions.
+The upstream hx-touchd service is included, but the N112.mtprops file must
+be supplied locally. The upstream fstab requests an APFS mount, yet the pinned
+kernel has no APFS filesystem driver and Buildroot disables FUSE, so Darth
+removes that mount attempt rather than touching the iOS volume. A firmware
+extraction helper reads the official IPSW by HTTP range requests and writes
+the N112.mtprops file locally; it is not uploaded to public CI artifacts.
+Without that file, touch initialization is skipped and the launcher runs in
+static framebuffer mode. With it, the HX path is still source-level only:
+touch coordinates, orientation, firmware loading, and actual taps require
+physical iPod testing. See UPSTREAM_PINS.md and firmware-tools/README.md.
 
 ## Pinned-kernel source audit: GPU, audio, and camera
 
