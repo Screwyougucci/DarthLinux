@@ -155,151 +155,14 @@ if grep -q '^BR2_PACKAGE_XORG7=y$' "$BUILDROOT_DIR/.config"; then
     echo "ERROR: Xorg is still enabled." >&2
     exit 1
 fi
-grep -q '^BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="board/darth-mobile/hx_h9p_defconfig"
-# Re-extract host-m4 so the compatibility patch is applied even on incremental runs.
-make -C "$BUILDROOT_DIR" host-m4-dirclean host-fakeroot-dirclean
-make -C "$BUILDROOT_DIR" -j"$JOBS" DART_MOBILE_SOURCE_DIR="$ROOT_DIR"
-
-mkdir -p "$ARTIFACT_DIR"
-if [ -f "$BUILDROOT_DIR/output/images/Image.gz" ]; then
-    cp "$BUILDROOT_DIR/output/images/Image.gz" "$ARTIFACT_DIR/Image.gz"
-elif [ -f "$BUILDROOT_DIR/output/images/Image" ]; then
-    cp "$BUILDROOT_DIR/output/images/Image" "$ARTIFACT_DIR/Image"
-else
-    echo "ERROR: Buildroot did not produce an ARM64 Image." >&2
-    exit 1
-fi
-
-for name in hx-h9p-n112.dtb rootfs.cpio.gz; do
-    if [ ! -f "$BUILDROOT_DIR/output/images/$name" ]; then
-        echo "ERROR: Buildroot did not produce $name." >&2
-        find "$BUILDROOT_DIR/output/images" -maxdepth 1 -type f -printf '%f\n' >&2
-        exit 1
-    fi
-    cp "$BUILDROOT_DIR/output/images/$name" "$ARTIFACT_DIR/$name"
-done
-
-cp "$BUILDROOT_DIR/.config" "$ARTIFACT_DIR/buildroot.config"
-printf 'Buildroot %s\nKernel %s\nProject Sandcastle %s\n' \
-    "$BUILDROOT_SHA" "$KERNEL_SHA" "$PROJECTSANDCASTLE_SHA" > "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
-printf "N112 kernel defconfig blob %s\n" "$KERNEL_CONFIG_BLOB_SHA" >> "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
-printf "Local kernel patch: 0001-dtc-remove-redundant-yylloc-for-gcc10.patch\n" >> "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
-(
-    cd "$ARTIFACT_DIR"
-    sha256sum Image* hx-h9p-n112.dtb rootfs.cpio.gz buildroot.config UPSTREAM_REVISIONS.txt > SHA256SUMS
-)
-
-echo "N112 build artifacts created in: $ARTIFACT_DIR"
- "$BUILDROOT_DIR/.config"
-grep -q '^BR2_LINUX_KERNEL_INTREE_DTS_NAME="hx/hx-h9p-n112"
-# Re-extract host-m4 so the compatibility patch is applied even on incremental runs.
-make -C "$BUILDROOT_DIR" host-m4-dirclean host-fakeroot-dirclean
-make -C "$BUILDROOT_DIR" -j"$JOBS" DART_MOBILE_SOURCE_DIR="$ROOT_DIR"
-
-mkdir -p "$ARTIFACT_DIR"
-if [ -f "$BUILDROOT_DIR/output/images/Image.gz" ]; then
-    cp "$BUILDROOT_DIR/output/images/Image.gz" "$ARTIFACT_DIR/Image.gz"
-elif [ -f "$BUILDROOT_DIR/output/images/Image" ]; then
-    cp "$BUILDROOT_DIR/output/images/Image" "$ARTIFACT_DIR/Image"
-else
-    echo "ERROR: Buildroot did not produce an ARM64 Image." >&2
-    exit 1
-fi
-
-for name in hx-h9p-n112.dtb rootfs.cpio.gz; do
-    if [ ! -f "$BUILDROOT_DIR/output/images/$name" ]; then
-        echo "ERROR: Buildroot did not produce $name." >&2
-        find "$BUILDROOT_DIR/output/images" -maxdepth 1 -type f -printf '%f\n' >&2
-        exit 1
-    fi
-    cp "$BUILDROOT_DIR/output/images/$name" "$ARTIFACT_DIR/$name"
-done
-
-cp "$BUILDROOT_DIR/.config" "$ARTIFACT_DIR/buildroot.config"
-printf 'Buildroot %s\nKernel %s\nProject Sandcastle %s\n' \
-    "$BUILDROOT_SHA" "$KERNEL_SHA" "$PROJECTSANDCASTLE_SHA" > "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
-printf "N112 kernel defconfig blob %s\n" "$KERNEL_CONFIG_BLOB_SHA" >> "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
-(
-    cd "$ARTIFACT_DIR"
-    sha256sum Image* hx-h9p-n112.dtb rootfs.cpio.gz buildroot.config UPSTREAM_REVISIONS.txt > SHA256SUMS
-)
-
-echo "N112 build artifacts created in: $ARTIFACT_DIR"
- "$BUILDROOT_DIR/.config"
-grep -q '^BR2_GLOBAL_PATCH_DIR="board/darth-mobile/patches"
-# Re-extract host-m4 so the compatibility patch is applied even on incremental runs.
-make -C "$BUILDROOT_DIR" host-m4-dirclean host-fakeroot-dirclean
-make -C "$BUILDROOT_DIR" -j"$JOBS" DART_MOBILE_SOURCE_DIR="$ROOT_DIR"
-
-mkdir -p "$ARTIFACT_DIR"
-if [ -f "$BUILDROOT_DIR/output/images/Image.gz" ]; then
-    cp "$BUILDROOT_DIR/output/images/Image.gz" "$ARTIFACT_DIR/Image.gz"
-elif [ -f "$BUILDROOT_DIR/output/images/Image" ]; then
-    cp "$BUILDROOT_DIR/output/images/Image" "$ARTIFACT_DIR/Image"
-else
-    echo "ERROR: Buildroot did not produce an ARM64 Image." >&2
-    exit 1
-fi
-
-for name in hx-h9p-n112.dtb rootfs.cpio.gz; do
-    if [ ! -f "$BUILDROOT_DIR/output/images/$name" ]; then
-        echo "ERROR: Buildroot did not produce $name." >&2
-        find "$BUILDROOT_DIR/output/images" -maxdepth 1 -type f -printf '%f\n' >&2
-        exit 1
-    fi
-    cp "$BUILDROOT_DIR/output/images/$name" "$ARTIFACT_DIR/$name"
-done
-
-cp "$BUILDROOT_DIR/.config" "$ARTIFACT_DIR/buildroot.config"
-printf 'Buildroot %s\nKernel %s\nProject Sandcastle %s\n' \
-    "$BUILDROOT_SHA" "$KERNEL_SHA" "$PROJECTSANDCASTLE_SHA" > "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
-printf "N112 kernel defconfig blob %s\n" "$KERNEL_CONFIG_BLOB_SHA" >> "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
-(
-    cd "$ARTIFACT_DIR"
-    sha256sum Image* hx-h9p-n112.dtb rootfs.cpio.gz buildroot.config UPSTREAM_REVISIONS.txt > SHA256SUMS
-)
-
-echo "N112 build artifacts created in: $ARTIFACT_DIR"
- "$BUILDROOT_DIR/.config"
+grep -q '^BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="board/darth-mobile/hx_h9p_defconfig"$' "$BUILDROOT_DIR/.config"
+grep -q '^BR2_LINUX_KERNEL_INTREE_DTS_NAME="hx/hx-h9p-n112"$' "$BUILDROOT_DIR/.config"
+grep -q '^BR2_GLOBAL_PATCH_DIR="board/darth-mobile/patches"$' "$BUILDROOT_DIR/.config"
 
 # Apply the upstream GCC 10 DTC fix through Buildroot's normal patch phase.
 make -C "$BUILDROOT_DIR" linux-patch
 KERNEL_BUILD_DIR="$BUILDROOT_DIR/output/build/linux-$KERNEL_SHA"
-if grep -q '^YYLTYPE yylloc;
-# Re-extract host-m4 so the compatibility patch is applied even on incremental runs.
-make -C "$BUILDROOT_DIR" host-m4-dirclean host-fakeroot-dirclean
-make -C "$BUILDROOT_DIR" -j"$JOBS" DART_MOBILE_SOURCE_DIR="$ROOT_DIR"
-
-mkdir -p "$ARTIFACT_DIR"
-if [ -f "$BUILDROOT_DIR/output/images/Image.gz" ]; then
-    cp "$BUILDROOT_DIR/output/images/Image.gz" "$ARTIFACT_DIR/Image.gz"
-elif [ -f "$BUILDROOT_DIR/output/images/Image" ]; then
-    cp "$BUILDROOT_DIR/output/images/Image" "$ARTIFACT_DIR/Image"
-else
-    echo "ERROR: Buildroot did not produce an ARM64 Image." >&2
-    exit 1
-fi
-
-for name in hx-h9p-n112.dtb rootfs.cpio.gz; do
-    if [ ! -f "$BUILDROOT_DIR/output/images/$name" ]; then
-        echo "ERROR: Buildroot did not produce $name." >&2
-        find "$BUILDROOT_DIR/output/images" -maxdepth 1 -type f -printf '%f\n' >&2
-        exit 1
-    fi
-    cp "$BUILDROOT_DIR/output/images/$name" "$ARTIFACT_DIR/$name"
-done
-
-cp "$BUILDROOT_DIR/.config" "$ARTIFACT_DIR/buildroot.config"
-printf 'Buildroot %s\nKernel %s\nProject Sandcastle %s\n' \
-    "$BUILDROOT_SHA" "$KERNEL_SHA" "$PROJECTSANDCASTLE_SHA" > "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
-printf "N112 kernel defconfig blob %s\n" "$KERNEL_CONFIG_BLOB_SHA" >> "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
-(
-    cd "$ARTIFACT_DIR"
-    sha256sum Image* hx-h9p-n112.dtb rootfs.cpio.gz buildroot.config UPSTREAM_REVISIONS.txt > SHA256SUMS
-)
-
-echo "N112 build artifacts created in: $ARTIFACT_DIR"
- "$KERNEL_BUILD_DIR/scripts/dtc/dtc-lexer.l"; then
+if grep -q '^YYLTYPE yylloc;$' "$KERNEL_BUILD_DIR/scripts/dtc/dtc-lexer.l"; then
     echo "ERROR: the duplicate DTC yylloc definition was not patched." >&2
     exit 1
 fi
@@ -331,6 +194,7 @@ cp "$BUILDROOT_DIR/.config" "$ARTIFACT_DIR/buildroot.config"
 printf 'Buildroot %s\nKernel %s\nProject Sandcastle %s\n' \
     "$BUILDROOT_SHA" "$KERNEL_SHA" "$PROJECTSANDCASTLE_SHA" > "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
 printf "N112 kernel defconfig blob %s\n" "$KERNEL_CONFIG_BLOB_SHA" >> "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
+printf "Local kernel patch: 0001-dtc-remove-redundant-yylloc-for-gcc10.patch\n" >> "$ARTIFACT_DIR/UPSTREAM_REVISIONS.txt"
 (
     cd "$ARTIFACT_DIR"
     sha256sum Image* hx-h9p-n112.dtb rootfs.cpio.gz buildroot.config UPSTREAM_REVISIONS.txt > SHA256SUMS
