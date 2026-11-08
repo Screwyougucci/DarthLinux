@@ -1,0 +1,33 @@
+name: ZDI-CAN-33367 Kernel Package Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "security/**"
+    paths:
+      - "scripts/audit-zdi-can-33367.sh"
+      - ".github/workflows/zdi-can-33367-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out Darth Linux
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Audit the kernel package in a clean Arch Linux container
+        run: |
+          docker pull archlinux:latest
+          docker run --rm \
+            -v "${{ github.workspace }}:/src:ro" \
+            -w /src \
+            archlinux:latest \
+            bash -euo pipefail -c '
+              pacman -Syu --noconfirm pacman-contrib
+              bash scripts/audit-zdi-can-33367.sh
+            '
