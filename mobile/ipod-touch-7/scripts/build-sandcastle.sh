@@ -198,6 +198,7 @@ printf "Local kernel patch: 0001-dtc-remove-redundant-yylloc-for-gcc10.patch\n" 
 (
     cd "$ARTIFACT_DIR"
     sha256sum Image* hx-h9p-n112.dtb rootfs.cpio.gz buildroot.config UPSTREAM_REVISIONS.txt > SHA256SUMS
+    sha256sum -c SHA256SUMS
 )
 
 echo "N112 build artifacts created in: $ARTIFACT_DIR"
