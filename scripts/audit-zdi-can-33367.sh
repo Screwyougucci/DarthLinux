@@ -18,7 +18,8 @@ echo "Known fixed Arch package baseline: $fixed_version"
 echo "Relevant upstream fix: 79dc34beb1fdb3da79753e51e15c68591a2561fe"
 echo
 
-if vercmp "$package_version" "$fixed_version" -ge 0; then
+comparison="$(vercmp "$package_version" "$fixed_version")"
+if (( comparison >= 0 )); then
   echo "RESULT: PACKAGE_VERSION_AT_OR_ABOVE_FIX_BASELINE"
   echo "The repository package version is at or above the known fixed baseline."
   echo "This is package-version evidence only; confirm the patch is present in the built kernel source and test the resulting ISO."
