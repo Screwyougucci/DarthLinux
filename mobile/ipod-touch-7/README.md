@@ -86,7 +86,7 @@ See [UPSTREAM_PINS.md](UPSTREAM_PINS.md) for exact source revisions.
 - [x] Add UI host tests and AArch64 16 KiB ABI validation workflow.
 - [x] Complete a successful N112 kernel, DTB, and initramfs build in CI (run #47; all three jobs passed).
 - [x] Generate a SHA-256 manifest for the successful build artifacts (run #47).
-- [ ] Verify the SHA-256 manifest in CI (workflow #48 is in progress; host UI and AArch64 jobs passed, N112 image job remains in progress).
+- [x] Verify the SHA-256 manifest in CI (workflow #48; all listed artifacts passed).
 - [ ] Complete the SBOM/license inventory.
 
 ### M2 — Non-destructive boot
@@ -123,4 +123,4 @@ See [UPSTREAM_PINS.md](UPSTREAM_PINS.md) for exact source revisions.
 
 ## Current release state
 
-GitHub Actions run [#47](https://github.com/Screwyougucci/DarthLinux/actions/runs/42401516256) successfully built the pinned N112 kernel image, N112 DTB, and initramfs, and passed the host UI and AArch64 16 KiB ABI jobs. The [CI artifact](https://github.com/Screwyougucci/DarthLinux/actions/runs/42401516256) is a set of Sandcastle boot components, not a single flashable image and not proof of a successful physical-device boot. A follow-up CI check to verify the generated SHA-256 manifest was added in commit `9ce2ae0`; workflow [#48](https://github.com/Screwyougucci/DarthLinux/actions/runs/42503272470) is running, with host UI and AArch64 jobs passed and the N112 image job still in progress. No physical-device boot or touchscreen test has been performed; the local `N112.mtprops` firmware still needs to be supplied through the documented local-only path. GPU acceleration, audio, and camera remain unsupported/unverified.
+GitHub Actions workflow [#48](https://github.com/Screwyougucci/DarthLinux/actions/runs/42503272470) completed successfully on 2026-11-08. All three jobs passed: host UI syntax/build/self-tests, AArch64 cross-compilation with 16 KiB ELF alignment checks, and the full pinned N112 Buildroot build. The N112 job generated and SHA-256-verified the kernel `Image`, `hx-h9p-n112.dtb`, `rootfs.cpio.gz`, `buildroot.config`, and `UPSTREAM_REVISIONS.txt`; it published the `SHA256SUMS` manifest. The [N112 build artifact](https://github.com/Screwyougucci/DarthLinux/actions/runs/42503272470) is a set of Sandcastle boot components, not a single flashable image and not proof of a successful physical-device boot. The separate AArch64 launcher prototype artifact is also available from the same run. No physical-device boot or touchscreen test has been performed. The extracted `N112.mtprops` firmware remains local-only and is not included in the public CI artifact; the next software step is to wire that local file into a private initramfs build. GPU acceleration, audio, and camera remain unsupported/unverified.
